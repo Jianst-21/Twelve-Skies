@@ -51,3 +51,13 @@ src/
 3. **Aturan Coding & Prisma:**
    - Selalu gunakan *singleton* `prisma` dari `src/lib/prisma.ts` agar tidak terjadi kebocoran koneksi (*too many clients*) saat *hot-reload* di mode development.
    - Gunakan TypeScript *strict mode* dan manfaatkan tipe otomatis yang dihasilkan oleh `@prisma/client`.
+
+## 4. Aturan Git Commit & Push
+- **Bahasa:** Seluruh pesan commit wajib menggunakan bahasa Inggris.
+- **Singkat & Garis Besar:** Pesan commit harus singkat dan bersifat umum (jangan terlalu detail atau panjang).
+- **Format:**
+  - `feat: add feature`
+  - `fix: bug fixes`
+  - `update: ui improvements`
+  - `refactor: clean up`
+  - `chore: update config`
