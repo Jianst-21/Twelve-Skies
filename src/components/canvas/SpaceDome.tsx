@@ -1,9 +1,32 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, Suspense } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Stars } from "@react-three/drei";
+import { Stars, useTexture } from "@react-three/drei";
 import * as THREE from "three";
+
+function CelestialDomeSphere() {
+  const texture = useTexture("/images/neowise/10-star-mini.jpg");
+  const domeRef = useRef<THREE.Mesh>(null);
+
+  useFrame((_, delta) => {
+    if (domeRef.current) {
+      domeRef.current.rotation.y += delta * 0.003;
+    }
+  });
+
+  return (
+    <mesh ref={domeRef}>
+      <sphereGeometry args={[95, 64, 64]} />
+      <meshBasicMaterial
+        map={texture}
+        side={THREE.BackSide}
+        transparent
+        opacity={0.5}
+      />
+    </mesh>
+  );
+}
 
 export default function SpaceDome() {
   const starsRef = useRef<THREE.Group>(null);
@@ -18,7 +41,7 @@ export default function SpaceDome() {
   return (
     <>
       {/* Ambient background light */}
-      <ambientLight intensity={0.4} />
+      <ambientLight intensity={0.6} />
 
       {/* Rotating Background Stars Field */}
       <group ref={starsRef}>
@@ -33,14 +56,19 @@ export default function SpaceDome() {
         />
       </group>
 
-      {/* Deep Space Dome Sphere (Nebula dust gradient) */}
+      {/* Realistic Neowise Starfield Dome */}
+      <Suspense fallback={null}>
+        <CelestialDomeSphere />
+      </Suspense>
+
+      {/* Deep Space Navy Atmosphere Tint */}
       <mesh>
-        <sphereGeometry args={[95, 32, 32]} />
+        <sphereGeometry args={[96, 32, 32]} />
         <meshBasicMaterial
           color="#03045E"
           side={THREE.BackSide}
           transparent
-          opacity={0.15}
+          opacity={0.2}
         />
       </mesh>
     </>

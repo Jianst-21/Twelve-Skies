@@ -64,8 +64,24 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen bg-space-black text-white flex items-center justify-center p-6 overflow-hidden">
-      {/* Subtle cosmic radial gradient background */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(3,4,94,0.45)_0%,rgba(0,0,0,0.95)_75%)]" />
+      {/* Authentic Neowise Continuous Cosmic Background */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-45 mix-blend-screen"
+        style={{
+          backgroundImage: "url('/images/neowise/10-star-mini.jpg')",
+        }}
+      />
+      <div
+        className="pointer-events-none fixed inset-0 z-0 bg-gradient-to-b from-space-black via-space-navy/40 to-space-black opacity-90"
+      />
+      <div
+        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-top opacity-30 mix-blend-lighten"
+        style={{
+          backgroundImage: "url('/images/neowise/2-star-mini.jpg')",
+        }}
+      />
+      <div className="pointer-events-none fixed -top-40 -left-40 z-0 w-[500px] h-[500px] rounded-full bg-cyan-glow/10 blur-[130px]" />
+      <div className="pointer-events-none fixed -bottom-40 -right-40 z-0 w-[500px] h-[500px] rounded-full bg-space-navy/60 blur-[140px]" />
 
       {/* Back to Home Button */}
       <Link

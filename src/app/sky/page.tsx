@@ -14,9 +14,13 @@ import UploadPhotoModal from "@/components/ui/UploadPhotoModal";
 const SkyCanvas = dynamic(() => import("@/components/canvas/SkyCanvas"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-space-black text-white">
-      <div className="w-12 h-12 rounded-full border-2 border-cyan-glow border-t-transparent animate-spin mb-4" />
-      <span className="font-display tracking-[0.2em] text-cyan-glow uppercase text-xs">
+    <div className="relative w-full h-full flex flex-col items-center justify-center bg-space-black text-white overflow-hidden">
+      <div
+        className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 mix-blend-screen"
+        style={{ backgroundImage: "url('/images/neowise/10-star-mini.jpg')" }}
+      />
+      <div className="relative z-10 w-12 h-12 rounded-full border-2 border-cyan-glow border-t-transparent animate-spin mb-4 shadow-[0_0_20px_rgba(124,222,228,0.5)]" />
+      <span className="relative z-10 font-display tracking-[0.25em] text-cyan-glow uppercase text-xs font-semibold">
         Mempersiapkan Kubah Antariksa...
       </span>
     </div>
