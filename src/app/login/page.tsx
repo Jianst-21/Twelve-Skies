@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Sparkles, ArrowLeft, Lock, Mail, AlertCircle, CheckCircle2 } from "lucide-react";
+import CelestialLogo from "@/components/ui/CelestialLogo";
+import { ArrowLeft, Lock, Mail, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -63,32 +64,31 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen bg-space-black text-white flex items-center justify-center p-6 overflow-hidden">
-      {/* Background glow effects */}
-      <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-space-navy/50 rounded-full blur-[140px]" />
-      <div className="pointer-events-none absolute bottom-0 right-10 w-[500px] h-[500px] bg-cyan-glow/10 rounded-full blur-[130px]" />
+      {/* Subtle cosmic radial gradient background */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(3,4,94,0.45)_0%,rgba(0,0,0,0.95)_75%)]" />
 
       {/* Back to Home Button */}
       <Link
         href="/"
-        className="absolute top-6 left-6 z-20 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-space-navy/40 border border-cyan-glow/30 text-xs sm:text-sm text-nebula-silver hover:text-white hover:border-cyan-glow transition-all"
+        className="absolute top-6 left-6 z-20 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-space-navy/40 border border-cyan-glow/20 text-xs sm:text-sm text-nebula-silver hover:text-white hover:border-cyan-glow/60 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Kembali ke Beranda</span>
       </Link>
 
-      <div className="relative z-10 w-full max-w-md p-8 sm:p-10 rounded-[32px] bg-space-navy/45 border border-cyan-glow/30 backdrop-blur-2xl shadow-[0_0_50px_rgba(3,4,94,0.6)]">
+      <div className="relative z-10 w-full max-w-md p-8 sm:p-10 rounded-3xl bg-space-navy/60 border border-cyan-glow/20 backdrop-blur-xl shadow-2xl shadow-black/80">
         {/* Brand header */}
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-12 h-12 rounded-full border border-cyan-glow/40 bg-space-navy/70 flex items-center justify-center text-cyan-glow shadow-[0_0_20px_rgba(124,222,228,0.3)] mb-3">
-            <Sparkles className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-full border border-cyan-glow/30 bg-space-navy/80 flex items-center justify-center text-cyan-glow mb-3">
+            <CelestialLogo size={24} />
           </div>
-          <h1 className="font-display text-2xl font-bold tracking-wider uppercase">
-            {isSignUp ? "Daftar Akun Vault" : "Masuk ke Twelve Skies"}
+          <h1 className="font-display text-2xl font-bold tracking-wider uppercase text-white">
+            {isSignUp ? "Daftar Akun Baru" : "Masuk ke Twelve Skies"}
           </h1>
           <p className="text-xs sm:text-sm text-nebula-silver mt-1">
             {isSignUp
-              ? "Buat kubah memori rasi bintang pribadi Anda"
-              : "Buka kembali arsip kenangan kosmik Anda"}
+              ? "Buat arsip memori rasi bintang Anda"
+              : "Buka kembali galeri kenangan langit Anda"}
           </p>
         </div>
 

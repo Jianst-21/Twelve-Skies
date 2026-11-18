@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ConstellationData, MemoryItem } from "@/types";
+import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
 import {
   X,
   Plus,
@@ -73,12 +74,12 @@ export default function NodeSplitPanel({
       {/* Top Header */}
       <div className="p-5 sm:p-6 border-b border-cyan-glow/20 flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xl" style={{ color: constellation.glowColor }}>
-              {constellation.symbol}
+          <div className="flex items-center gap-2.5">
+            <span className="flex items-center" style={{ color: constellation.glowColor }}>
+              <ZodiacGlyph id={constellation.id} size={20} />
             </span>
             <h2 className="font-display text-lg sm:text-xl font-bold tracking-wider text-white uppercase">
-              {constellation.name} — Titik #{nodeIndex + 1}
+              {constellation.name} : Titik {nodeIndex + 1}
             </h2>
           </div>
           <p className="text-xs text-nebula-silver mt-0.5">

@@ -3,12 +3,13 @@
 import { useState, useRef, useEffect, useTransition } from "react";
 import { getConstellationAndNode } from "@/lib/dateDistributor";
 import { createClient } from "@/lib/supabase/client";
+import CelestialLogo from "@/components/ui/CelestialLogo";
+import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
 import {
   X,
   Upload,
   Calendar,
   MapPin,
-  Sparkles,
   AlertCircle,
   FileImage,
 } from "lucide-react";
@@ -192,8 +193,8 @@ export default function UploadPhotoModal({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-cyan-glow/20 mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-cyan-glow/20 border border-cyan-glow/40 flex items-center justify-center text-cyan-glow">
-              <Sparkles className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-full bg-cyan-glow/15 border border-cyan-glow/40 flex items-center justify-center text-cyan-glow">
+              <CelestialLogo size={18} />
             </div>
             <div>
               <h2 className="font-display text-lg font-bold uppercase tracking-wider text-white">
@@ -297,10 +298,10 @@ export default function UploadPhotoModal({
               >
                 <div className="flex items-center gap-2">
                   <span
-                    className="text-base"
+                    className="flex items-center justify-center"
                     style={{ color: mapping.constellation.glowColor }}
                   >
-                    {mapping.constellation.symbol}
+                    <ZodiacGlyph id={mapping.constellation.id} size={16} />
                   </span>
                   <div>
                     <span className="font-display font-bold uppercase text-white">

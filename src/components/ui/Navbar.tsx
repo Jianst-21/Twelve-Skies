@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, Plus, RotateCcw, LogOut } from "lucide-react";
+import { Plus, RotateCcw, LogOut } from "lucide-react";
+import CelestialLogo from "@/components/ui/CelestialLogo";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -24,14 +25,14 @@ export default function Navbar({ onOpenUpload, onResetCamera }: NavbarProps) {
     <header className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-5xl h-16 rounded-full px-5 sm:px-6 bg-space-navy/50 border border-cyan-glow/30 backdrop-blur-xl shadow-[0_0_30px_rgba(3,4,94,0.7)] flex items-center justify-between">
       {/* Brand */}
       <Link href="/" className="flex items-center gap-3 group">
-        <div className="w-9 h-9 rounded-full border border-cyan-glow/40 bg-space-navy/80 flex items-center justify-center text-cyan-glow group-hover:scale-105 transition-transform shadow-[0_0_12px_rgba(124,222,228,0.3)]">
-          <Sparkles className="w-4 h-4" />
+        <div className="w-9 h-9 rounded-full border border-cyan-glow/30 bg-space-navy/80 flex items-center justify-center text-cyan-glow group-hover:border-cyan-glow transition-colors">
+          <CelestialLogo size={20} />
         </div>
         <div className="hidden sm:block">
-          <span className="font-display text-sm font-bold tracking-wider text-white uppercase block leading-tight">
+          <span className="font-display text-sm font-semibold tracking-wider text-white uppercase block leading-tight">
             Twelve Skies
           </span>
-          <span className="text-[9px] tracking-[0.2em] text-cyan-glow uppercase block leading-tight">
+          <span className="text-[9px] tracking-[0.2em] text-cyan-glow/80 uppercase block leading-tight font-mono">
             Celestial Vault
           </span>
         </div>

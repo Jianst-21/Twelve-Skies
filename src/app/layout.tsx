@@ -14,7 +14,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Twelve Skies — 3D Celestial Photo Vault",
+  title: "Twelve Skies · 3D Celestial Photo Vault",
   description: "An immersive 3D space gallery mapping personal memories across the 12 zodiac constellations.",
 };
 
