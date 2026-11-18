@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Memory {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  constellationId String   @map("constellation_id") @db.VarChar(32)
+  nodeIndex       Int      @map("node_index") @db.SmallInt
+  memoryDate      DateTime @map("memory_date") @db.Date
+  location        String?  @db.VarChar(150)
+  caption         String   @db.Text
+  imageUrl        String   @map("image_url") @db.Text
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId, constellationId, nodeIndex])
+  @@map("memories")
+}

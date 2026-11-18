@@ -1,26 +1,46 @@
 @import "tailwindcss";
 
+@theme {
+  --color-space-black: #000000;
+  --color-space-navy: #03045E;
+  --color-space-navy-glass: rgba(3, 4, 94, 0.45);
+  --color-cyan-glow: #7CDEE4;
+  --color-cyan-glow-30: rgba(124, 222, 228, 0.31);
+  --color-cyan-glow-60: rgba(124, 222, 228, 0.63);
+  --color-amber-star: #FEC42D;
+  --color-nebula-silver: #A0AEC0;
+
+  --font-display: var(--font-titillium-web), sans-serif;
+  --font-body: var(--font-inter), sans-serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #000000;
+  --foreground: #ffffff;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar for cosmic theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 222, 228, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7CDEE4;
 }
