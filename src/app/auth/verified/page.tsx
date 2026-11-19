@@ -3,13 +3,16 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import CelestialLogo from "@/components/ui/CelestialLogo";
-import WakeStarfieldBackground from "@/components/canvas/WakeStarfieldBackground";
+import AuthSkyBackdrop from "@/components/canvas/AuthSkyBackdrop";
 
 async function VerifiedSessionActions() {
   let verifiedEmail: string | null = null;
   let hasActiveSession = false;
 
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
     try {
       const supabase = await createClient();
       const {
@@ -33,7 +36,7 @@ async function VerifiedSessionActions() {
       </p>
 
       {verifiedEmail && (
-        <div className="mt-5 px-3.5 py-2.5 rounded-lg bg-black/55 border border-white/10 text-xs font-mono text-ink-secondary break-all">
+        <div className="mt-5 px-3.5 py-2.5 rounded-lg bg-space-black/75 border border-white/12 text-xs font-mono text-ink-secondary break-all">
           {verifiedEmail}
         </div>
       )}
@@ -42,14 +45,14 @@ async function VerifiedSessionActions() {
         {hasActiveSession ? (
           <Link
             href="/sky"
-            className="w-full min-h-[44px] px-6 py-2.5 rounded-lg bg-cyan-glow text-space-navy font-bold text-sm inline-flex items-center justify-center hover:bg-ink-primary transition-colors"
+            className="w-full min-h-[44px] px-6 py-2.5 rounded-lg bg-cyan-glow text-space-navy font-bold text-sm inline-flex items-center justify-center hover:bg-ink-primary active:scale-[0.99] transition-colors"
           >
             Enter 3D Sky Vault
           </Link>
         ) : (
           <Link
             href="/login?verified=true"
-            className="w-full min-h-[44px] px-6 py-2.5 rounded-lg bg-cyan-glow text-space-navy font-bold text-sm inline-flex items-center justify-center hover:bg-ink-primary transition-colors"
+            className="w-full min-h-[44px] px-6 py-2.5 rounded-lg bg-cyan-glow text-space-navy font-bold text-sm inline-flex items-center justify-center hover:bg-ink-primary active:scale-[0.99] transition-colors"
           >
             Sign In to Twelve Skies
           </Link>
@@ -57,7 +60,7 @@ async function VerifiedSessionActions() {
 
         <Link
           href="/"
-          className="w-full min-h-[44px] px-6 py-2.5 rounded-lg border border-white/20 bg-transparent text-ink-primary font-medium text-sm inline-flex items-center justify-center hover:border-cyan-glow/60 hover:bg-white/[0.04] transition-colors"
+          className="w-full min-h-[44px] px-6 py-2.5 rounded-lg border border-white/20 bg-transparent text-ink-primary font-medium text-sm inline-flex items-center justify-center hover:border-cyan-glow hover:bg-white/[0.04] transition-colors"
         >
           Return to Observatory
         </Link>
@@ -76,7 +79,7 @@ function VerifiedActionsFallback() {
         <div className="w-full min-h-[44px] rounded-lg bg-white/10 animate-pulse" />
         <Link
           href="/"
-          className="w-full min-h-[44px] px-6 py-2.5 rounded-lg border border-white/20 bg-transparent text-ink-primary font-medium text-sm inline-flex items-center justify-center hover:border-cyan-glow/60 hover:bg-white/[0.04] transition-colors"
+          className="w-full min-h-[44px] px-6 py-2.5 rounded-lg border border-white/20 bg-transparent text-ink-primary font-medium text-sm inline-flex items-center justify-center hover:border-cyan-glow hover:bg-white/[0.04] transition-colors"
         >
           Return to Observatory
         </Link>
@@ -87,30 +90,39 @@ function VerifiedActionsFallback() {
 
 export default function EmailVerifiedPage() {
   return (
-    <div className="relative min-h-screen bg-space-black text-ink-primary flex flex-col justify-between p-5 sm:p-8">
-      <WakeStarfieldBackground />
+    <div className="relative min-h-screen bg-space-black text-ink-primary flex flex-col">
+      <AuthSkyBackdrop focusedConstellationId="leo" desktopAlign="center" />
 
-      {/* Top Back Navigation */}
-      <div className="relative z-20 flex items-center justify-between max-w-7xl w-full mx-auto">
-        <Link
-          href="/"
-          className="min-h-[44px] px-4 inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/60 text-sm text-ink-secondary hover:text-ink-primary hover:border-cyan-glow/60 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-          <span>Back to Observatory</span>
-        </Link>
-      </div>
+      {/* Top Observatory Bar (aligned with LandingHeader) */}
+      <header className="sticky top-0 z-30 border-b border-white/12 bg-space-black">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-3">
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group min-h-[44px] shrink-0">
+            <span className="w-9 h-9 rounded-lg border border-cyan-glow/30 bg-space-abyss flex items-center justify-center text-cyan-glow group-hover:border-cyan-glow transition-colors shrink-0">
+              <CelestialLogo size={24} />
+            </span>
+            <span className="font-display text-sm sm:text-lg font-bold tracking-[0.12em] uppercase text-ink-primary whitespace-nowrap">
+              Twelve Skies
+            </span>
+          </Link>
+
+          <Link
+            href="/"
+            aria-label="Back to Observatory"
+            className="min-h-[44px] px-3.5 sm:px-4 inline-flex items-center gap-2 rounded-lg border border-white/20 text-sm font-medium text-ink-primary hover:border-cyan-glow hover:bg-white/[0.04] transition-colors whitespace-nowrap shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span className="hidden sm:inline">Back to Observatory</span>
+            <span className="sm:hidden">Back</span>
+          </Link>
+        </div>
+      </header>
 
       {/* Centered Confirmation Card */}
-      <main className="relative z-10 w-full max-w-md mx-auto my-8">
+      <main className="relative z-10 flex-1 flex items-center justify-center px-5 sm:px-8 py-10 sm:py-14">
         <section
           aria-labelledby="verified-heading"
-          className="rounded-xl border border-cyan-glow/25 bg-space-abyss/85 backdrop-blur-md p-6 sm:p-8 text-center"
+          className="w-full max-w-md rounded-xl border border-white/15 bg-space-abyss/72 backdrop-blur-md p-6 sm:p-8 text-center"
         >
-          <div className="w-12 h-12 rounded-xl border border-cyan-glow/35 bg-black/60 flex items-center justify-center text-cyan-glow mx-auto mb-5">
-            <CelestialLogo size={30} />
-          </div>
-
           <div className="inline-flex items-center justify-center gap-2 text-emerald-300 mb-3">
             <CheckCircle2 className="w-5 h-5 shrink-0" aria-hidden="true" />
             <span className="text-sm font-semibold">Verification Complete</span>
@@ -118,7 +130,7 @@ export default function EmailVerifiedPage() {
 
           <h1
             id="verified-heading"
-            className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-ink-primary"
+            className="font-display text-2xl sm:text-3xl font-bold tracking-[-0.02em] text-ink-primary"
           >
             Email Address Confirmed
           </h1>
@@ -129,8 +141,10 @@ export default function EmailVerifiedPage() {
         </section>
       </main>
 
-      <footer className="relative z-10 text-center text-xs text-ink-muted">
-        Protected by Supabase Auth and private Prisma ORM server boundaries.
+      <footer className="relative z-10 border-t border-white/12 bg-space-black">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 text-center text-xs text-ink-muted">
+          Protected by Supabase Auth and private Prisma ORM server boundaries.
+        </div>
       </footer>
     </div>
   );
