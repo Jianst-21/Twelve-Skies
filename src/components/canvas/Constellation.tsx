@@ -12,7 +12,6 @@ import StarNode from "./StarNode";
 import {
   computeConstellationLabelPosition,
   computeSegmentHitbox,
-  getHighlightedLineIndices,
 } from "./celestialMath";
 
 interface ConstellationProps {
@@ -103,33 +102,6 @@ export default function Constellation({
       .filter((item): item is NonNullable<typeof item> => item !== null);
   }, [constellation]);
 
-  // Extra luminous highlight points for the hovered line segment or hovered star's edges
-  const highlightedLinePoints = useMemo(() => {
-    const indices = getHighlightedLineIndices(
-      constellation.lines,
-      hoveredLineIndex,
-      hoveredNodeIndex
-    );
-    const pts: [number, number, number][] = [];
-    for (const idx of indices) {
-      const pair = constellation.lines[idx];
-      if (!pair) continue;
-      const fromPos = constellation.nodes[pair[0]];
-      const toPos = constellation.nodes[pair[1]];
-      if (fromPos && toPos) {
-        pts.push(fromPos, toPos);
-      }
-    }
-    return pts;
-  }, [constellation, hoveredLineIndex, hoveredNodeIndex]);
-
-  // Bright starlight tint mixed with constellation color for highlighted filaments
-  const highlightCoreColor = useMemo(() => {
-    const c = new THREE.Color(constellation.glowColor);
-    c.lerp(new THREE.Color("#ffffff"), 0.55);
-    return `#${c.getHexString()}`;
-  }, [constellation.glowColor]);
-
   const labelPosition = useMemo(
     () => computeConstellationLabelPosition(constellation, 2.7),
     [constellation]
@@ -140,7 +112,7 @@ export default function Constellation({
     [constellation.center]
   );
 
-  // Hide HTML nameplates behind the camera + smoothly warm/fade filament glow
+  // Hide HTML nameplates behind the camera + smoothly warm/fade uniform constellation glow
   useFrame(({ camera }, delta) => {
     camForwardRef.current.copy(FORWARD_AXIS).applyQuaternion(camera.quaternion);
     const dot = camForwardRef.current.dot(centerDir);
@@ -153,17 +125,17 @@ export default function Constellation({
     const dt = Math.min(delta, 0.05);
     const targetBaseOpacity = isSelected
       ? isHovered
-        ? 0.98
-        : 0.86
+        ? 1.0
+        : 0.88
       : isHovered
-      ? 0.84
+      ? 0.9
       : 0.3;
     const targetGlowOpacity = isSelected
       ? isHovered
-        ? 0.34
+        ? 0.36
         : 0.2
       : isHovered
-      ? 0.26
+      ? 0.3
       : 0;
 
     if (reducedMotionRef.current) {
@@ -203,14 +175,14 @@ export default function Constellation({
           points={linePoints}
           segments
           color={activeColor}
-          lineWidth={isSelected ? (isHovered ? 2.3 : 2.0) : isHovered ? 1.85 : 1.0}
+          lineWidth={isSelected ? (isHovered ? 2.3 : 2.0) : isHovered ? 2.0 : 1.0}
           transparent
-          opacity={isSelected ? 0.86 : isHovered ? 0.84 : 0.3}
+          opacity={isSelected ? 0.88 : isHovered ? 0.9 : 0.3}
           depthWrite={false}
         />
       )}
 
-      {/* Smooth additive glow filament across the constellation */}
+      {/* Smooth uniform additive glow across the entire constellation */}
       {linePoints.length > 0 && (
         <Line
           ref={glowLineRef}
@@ -225,32 +197,7 @@ export default function Constellation({
         />
       )}
 
-      {/* Luminous highlight overlay for hovered line segment or hovered star's connected edges */}
-      {highlightedLinePoints.length > 0 && (
-        <group>
-          <Line
-            points={highlightedLinePoints}
-            segments
-            color={highlightCoreColor}
-            lineWidth={2.7}
-            transparent
-            opacity={0.98}
-            depthWrite={false}
-          />
-          <Line
-            points={highlightedLinePoints}
-            segments
-            color={constellation.glowColor}
-            lineWidth={8.8}
-            transparent
-            opacity={0.42}
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
-          />
-        </group>
-      )}
-
-      {/* Invisible trimmed raycast cylinders so hovering or clicking any line works effortlessly */}
+      {/* Invisible trimmed raycast cylinders so hovering or clicking any line lights the whole constellation */}
       {segmentHitboxes.map((seg) => (
         <mesh
           key={`${constellation.id}-seg-hit-${seg.lineIdx}`}
