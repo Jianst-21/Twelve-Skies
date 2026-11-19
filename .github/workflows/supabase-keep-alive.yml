@@ -1,0 +1,33 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Run every 3 days at 00:00 UTC to keep Supabase free tier active (pauses after 7 days idle)
+    - cron: "0 0 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Twelve Skies keep-alive endpoint
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+              echo "::error::Missing APP_URL or CRON_SECRET repository secret."
+              exit 1
+            fi
+            echo "::notice::Skipped GitHub Actions keep-alive because APP_URL or CRON_SECRET secret is not set (configure them if not using Vercel Cron)."
+            exit 0
+          fi
+
+          TARGET_URL="${APP_URL%/}/api/cron/keep-alive"
+          echo "Pinging ${TARGET_URL}..."
+          curl --fail-with-body -sS --max-time 30 --retry 2 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${TARGET_URL}"
+          echo ""
