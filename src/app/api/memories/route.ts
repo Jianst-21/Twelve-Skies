@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  MEMORY_STORAGE_BUCKET,
+  removeMemoryStorageObject,
+} from "@/lib/memoryStorage";
 import { getConstellationAndNode } from "@/lib/dateDistributor";
 
 // GET /api/memories - Fetch memories for authenticated user
@@ -84,19 +89,33 @@ export async function POST(request: NextRequest) {
     // Determine constellation and node according to single source of truth algorithm
     const mapping = getConstellationAndNode(targetDate);
 
-    const newMemory = await prisma.memory.create({
-      data: {
-        userId: user.id,
-        constellationId: mapping.constellation.id,
-        nodeIndex: mapping.nodeIndex,
-        memoryDate: targetDate,
-        location: location || null,
-        caption: caption.trim(),
-        imageUrl: imageUrl.trim(),
-      },
-    });
+    try {
+      const newMemory = await prisma.memory.create({
+        data: {
+          userId: user.id,
+          constellationId: mapping.constellation.id,
+          nodeIndex: mapping.nodeIndex,
+          memoryDate: targetDate,
+          location: location || null,
+          caption: caption.trim(),
+          imageUrl: imageUrl.trim(),
+        },
+      });
 
-    return NextResponse.json({ memory: newMemory, mapping }, { status: 201 });
+      return NextResponse.json({ memory: newMemory, mapping }, { status: 201 });
+    } catch (dbError) {
+      const admin = createAdminClient();
+      if (admin) {
+        await removeMemoryStorageObject({
+          imageUrl: imageUrl.trim(),
+          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+          requireUserId: user.id,
+          removeObjects: (paths) =>
+            admin.storage.from(MEMORY_STORAGE_BUCKET).remove(paths),
+        });
+      }
+      throw dbError;
+    }
   } catch (error) {
     console.error("Error creating memory:", error);
     return NextResponse.json(

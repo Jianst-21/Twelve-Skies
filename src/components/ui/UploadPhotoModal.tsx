@@ -67,13 +67,16 @@ export default function UploadPhotoModal({
   const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
   const mapping = isValidDate ? getConstellationAndNode(dateStr) : null;
 
-  // Client-side image compression (max 1920px, WebP quality 0.82)
-  const compressImage = async (file: File): Promise<Blob> => {
+  // Client-side image compression (max 1920px, WebP quality 0.82 with JPEG fallback)
+  const compressImage = async (
+    file: File
+  ): Promise<{ blob: Blob; contentType: string }> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      img.src = URL.createObjectURL(file);
+      const objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl;
       img.onload = () => {
-        URL.revokeObjectURL(img.src);
+        URL.revokeObjectURL(objectUrl);
         const canvas = document.createElement("canvas");
         const maxDim = 1920;
         let width = img.width;
@@ -101,15 +104,31 @@ export default function UploadPhotoModal({
 
         ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob(
-          (blob) => {
-            if (blob) resolve(blob);
-            else reject(new Error("Image compression failed"));
+          (webpBlob) => {
+            if (webpBlob && webpBlob.type === "image/webp") {
+              resolve({ blob: webpBlob, contentType: "image/webp" });
+              return;
+            }
+            canvas.toBlob(
+              (jpegBlob) => {
+                if (jpegBlob) {
+                  resolve({ blob: jpegBlob, contentType: "image/jpeg" });
+                } else {
+                  reject(new Error("Image compression failed"));
+                }
+              },
+              "image/jpeg",
+              0.82
+            );
           },
           "image/webp",
           0.82
         );
       };
-      img.onerror = (err) => reject(err);
+      img.onerror = (err) => {
+        URL.revokeObjectURL(objectUrl);
+        reject(err);
+      };
     });
   };
 
@@ -136,26 +155,36 @@ export default function UploadPhotoModal({
     startTransition(async () => {
       setErrorMessage(null);
       try {
-        const compressedBlob = await compressImage(selectedFile);
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.webp`;
-        const filePath = `user-memories/${fileName}`;
+        const { blob: compressedBlob, contentType } = await compressImage(selectedFile);
+
+        const signedRes = await fetch("/api/memories/upload-url", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ contentType }),
+        });
+
+        if (signedRes.redirected) {
+          throw new Error("Your session has expired. Please sign in again.");
+        }
+
+        const signedData = await signedRes.json().catch(() => null);
+        if (!signedRes.ok || !signedData?.token || !signedData?.path) {
+          throw new Error(signedData?.error || "Failed to authorize image upload.");
+        }
 
         const { error: uploadError } = await supabase.storage
-          .from("sky-memories")
-          .upload(filePath, compressedBlob, {
-            contentType: "image/webp",
-            upsert: false,
+          .from(signedData.bucket)
+          .uploadToSignedUrl(signedData.path, signedData.token, compressedBlob, {
+            contentType: signedData.contentType,
           });
 
         if (uploadError) {
           throw new Error(`Storage upload failed: ${uploadError.message}`);
         }
 
-        const { data: urlData } = supabase.storage
-          .from("sky-memories")
-          .getPublicUrl(filePath);
-
-        const publicImageUrl = urlData.publicUrl;
+        const publicImageUrl = signedData.publicUrl;
 
         const res = await fetch("/api/memories", {
           method: "POST",
@@ -170,9 +199,13 @@ export default function UploadPhotoModal({
           }),
         });
 
+        if (res.redirected) {
+          throw new Error("Your session has expired. Please sign in again.");
+        }
+
         if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.error || "Failed to save memory to the server.");
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || "Failed to save memory to the server.");
         }
 
         setSelectedFile(null);

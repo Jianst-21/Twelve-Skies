@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  MEMORY_STORAGE_BUCKET,
+  removeMemoryStorageObject,
+} from "@/lib/memoryStorage";
 import { getConstellationAndNode } from "@/lib/dateDistributor";
 
 // PATCH /api/memories/[id] - Update caption, location, or memoryDate
@@ -118,6 +123,19 @@ export async function DELETE(
         id,
       },
     });
+
+    const admin = createAdminClient();
+    if (admin) {
+      const cleanup = await removeMemoryStorageObject({
+        imageUrl: existing.imageUrl,
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        removeObjects: (paths) =>
+          admin.storage.from(MEMORY_STORAGE_BUCKET).remove(paths),
+      });
+      if (cleanup.attempted && !cleanup.removed) {
+        console.warn("Storage cleanup warning after memory deletion:", cleanup.error);
+      }
+    }
 
     return NextResponse.json({ success: true, message: "Memory deleted successfully." });
   } catch (error) {
