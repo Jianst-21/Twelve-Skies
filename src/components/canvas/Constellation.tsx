@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useFrame } from "@react-three/fiber";
+import { Html, Line } from "@react-three/drei";
 import * as THREE from "three";
-import { Html } from "@react-three/drei";
 import { ConstellationData, MemoryItem } from "@/types";
 import { getNodeDateRange } from "@/lib/dateDistributor";
 import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
 import StarNode from "./StarNode";
+import { computeConstellationLabelPosition } from "./celestialMath";
 
 interface ConstellationProps {
   constellation: ConstellationData;
@@ -17,6 +19,8 @@ interface ConstellationProps {
   onSelectNode: (nodeIndex: number) => void;
 }
 
+const FORWARD_AXIS = new THREE.Vector3(0, 0, -1);
+
 export default function Constellation({
   constellation,
   memoriesByNode,
@@ -25,7 +29,15 @@ export default function Constellation({
   onSelectConstellation,
   onSelectNode,
 }: ConstellationProps) {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isLabelHovered, setIsLabelHovered] = useState(false);
+  const [hoveredNodeCount, setHoveredNodeCount] = useState(0);
+  const [isInFront, setIsInFront] = useState(true);
+
+  const camForwardRef = useRef(new THREE.Vector3());
+  const inFrontRef = useRef(true);
+
+  const isHovered = isLabelHovered || hoveredNodeCount > 0;
+  const isActive = isSelected || isHovered;
 
   const totalConstellationMemories = useMemo(
     () =>
@@ -33,80 +45,114 @@ export default function Constellation({
     [memoriesByNode]
   );
 
-  // Build line geometry connecting constellation nodes
-  const lineGeometry = useMemo(() => {
-    const points: THREE.Vector3[] = [];
+  // Pairwise segment list for screen-space anti-aliased Drei <Line segments />
+  const linePoints = useMemo(() => {
+    const pts: [number, number, number][] = [];
     for (const [fromIdx, toIdx] of constellation.lines) {
       const fromPos = constellation.nodes[fromIdx];
       const toPos = constellation.nodes[toIdx];
       if (fromPos && toPos) {
-        points.push(new THREE.Vector3(...fromPos));
-        points.push(new THREE.Vector3(...toPos));
+        pts.push(fromPos, toPos);
       }
     }
-    return new THREE.BufferGeometry().setFromPoints(points);
+    return pts;
   }, [constellation]);
 
-  const activeOpacity = isSelected ? 0.95 : isHovered ? 0.85 : 0.38;
-  const activeColor = isSelected || isHovered ? constellation.glowColor : "#64748B";
+  const labelPosition = useMemo(
+    () => computeConstellationLabelPosition(constellation, 2.7),
+    [constellation]
+  );
+
+  const centerDir = useMemo(
+    () => new THREE.Vector3(...constellation.center).normalize(),
+    [constellation.center]
+  );
+
+  // Hide HTML nameplates for constellations behind the camera to avoid edge artifacts
+  useFrame(({ camera }) => {
+    camForwardRef.current.copy(FORWARD_AXIS).applyQuaternion(camera.quaternion);
+    const dot = camForwardRef.current.dot(centerDir);
+    const nextInFront = dot > 0.22;
+    if (nextInFront !== inFrontRef.current) {
+      inFrontRef.current = nextInFront;
+      setIsInFront(nextInFront);
+    }
+  });
+
+  const activeOpacity = isSelected ? 0.92 : isHovered ? 0.78 : 0.3;
+  const activeColor = isActive ? constellation.glowColor : "#7c91b0";
 
   return (
     <group>
-      {/* Constellation line segments */}
-      <lineSegments geometry={lineGeometry}>
-        <lineBasicMaterial
+      {/* Crisp screen-space constellation filaments */}
+      {linePoints.length > 0 && (
+        <Line
+          points={linePoints}
+          segments
           color={activeColor}
+          lineWidth={isSelected ? 2.1 : isHovered ? 1.7 : 1.0}
           transparent
           opacity={activeOpacity}
-          linewidth={isSelected || isHovered ? 2 : 1}
+          depthWrite={false}
         />
-      </lineSegments>
+      )}
 
-      {/* Center Label / Constellation Marker */}
-      <group position={constellation.center}>
-        <Html center distanceFactor={22} zIndexRange={[5, 0]}>
-          <button
-            type="button"
-            className={`transition-all duration-300 cursor-pointer select-none px-3.5 py-1.5 rounded-lg border backdrop-blur-md flex items-center gap-2.5 ${
-              isSelected
-                ? "bg-space-abyss/90 border-cyan-glow scale-105"
-                : isHovered
-                ? "bg-space-abyss/80 border-white/40 scale-105"
-                : "bg-black/65 border-white/15 opacity-80 hover:opacity-100"
-            }`}
-            style={{
-              boxShadow:
-                isSelected || isHovered ? `0 0 16px ${constellation.glowColor}40` : undefined,
-            }}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelectConstellation(constellation);
-            }}
-          >
-            <span
-              className="flex items-center justify-center shrink-0"
-              style={{ color: constellation.glowColor }}
+      {/* Subtle additive glow filament when constellation is focused or hovered */}
+      {isActive && linePoints.length > 0 && (
+        <Line
+          points={linePoints}
+          segments
+          color={constellation.glowColor}
+          lineWidth={5.2}
+          transparent
+          opacity={isSelected ? 0.2 : 0.14}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      )}
+
+      {/* Offset Astronomical Nameplate (positioned cleanly below lowest star) */}
+      {isInFront && (
+        <group position={labelPosition}>
+          <Html center distanceFactor={32} zIndexRange={[5, 0]}>
+            <button
+              type="button"
+              className={`transition-all duration-200 cursor-pointer select-none px-3 py-1 rounded-lg border flex items-center gap-2 whitespace-nowrap ${
+                isSelected
+                  ? "bg-space-abyss/85 border-cyan-glow/60 text-ink-primary"
+                  : isHovered
+                  ? "bg-space-abyss/80 border-white/35 text-ink-primary"
+                  : "bg-transparent border-transparent text-ink-secondary/80 hover:text-ink-primary"
+              }`}
+              onMouseEnter={() => setIsLabelHovered(true)}
+              onMouseLeave={() => setIsLabelHovered(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectConstellation(constellation);
+              }}
             >
-              <ZodiacGlyph id={constellation.id} size={15} />
-            </span>
-            <div className="text-left">
-              <span className="font-display text-xs font-bold tracking-wider text-ink-primary block uppercase leading-none">
+              <span
+                className="flex items-center justify-center shrink-0"
+                style={{ color: constellation.glowColor }}
+              >
+                <ZodiacGlyph id={constellation.id} size={14} />
+              </span>
+              <span className="font-display text-xs font-semibold tracking-wider uppercase leading-none">
                 {constellation.name}
               </span>
-              <span className="font-mono text-[9px] text-ink-secondary block mt-0.5 leading-none">
-                {constellation.periodText}
-                {totalConstellationMemories > 0
-                  ? ` · ${totalConstellationMemories} saved`
-                  : ""}
-              </span>
-            </div>
-          </button>
-        </Html>
-      </group>
+              {(isActive || totalConstellationMemories > 0) && (
+                <span className="font-mono text-xs text-ink-secondary leading-none">
+                  {totalConstellationMemories > 0
+                    ? `${totalConstellationMemories} saved`
+                    : constellation.periodText}
+                </span>
+              )}
+            </button>
+          </Html>
+        </group>
+      )}
 
-      {/* Render Star Nodes */}
+      {/* 3D 4-Point Sparkle Star Nodes */}
       {constellation.nodes.map((pos, idx) => {
         const dateRange = getNodeDateRange(constellation.id, idx);
         const nodeMemories = memoriesByNode[idx] || [];
@@ -122,6 +168,10 @@ export default function Constellation({
             dateRangeText={dateRange.formattedRange}
             memories={nodeMemories}
             isSelected={isNodeSelected}
+            isConstellationActive={isActive}
+            onHoverChange={(hovered) => {
+              setHoveredNodeCount((c) => Math.max(0, c + (hovered ? 1 : -1)));
+            }}
             onSelect={(nodeIdx) => {
               if (!isSelected) {
                 onSelectConstellation(constellation);

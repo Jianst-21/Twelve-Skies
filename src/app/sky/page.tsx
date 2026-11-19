@@ -232,7 +232,7 @@ export default function SkyPage() {
       : "";
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden bg-space-black select-none">
+    <main className="relative w-full h-dvh overflow-hidden bg-space-black select-none">
       {/* Floating Observatory Navbar */}
       <Navbar
         memoryCount={memories.length}
@@ -409,12 +409,8 @@ export default function SkyPage() {
         </aside>
       )}
 
-      {/* 3D Canvas Area */}
-      <div
-        className={`w-full h-full transition-all duration-500 ${
-          isSplitView ? "md:w-[55vw]" : "w-full"
-        }`}
-      >
+      {/* 3D Canvas Area (stays full viewport so WebGL never resizes during split-view) */}
+      <div className="w-full h-full">
         <SkyCanvas
           selectedConstellation={selectedConstellation}
           selectedNodeIndex={selectedNodeIndex}

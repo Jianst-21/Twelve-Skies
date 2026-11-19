@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
+import * as THREE from "three";
 import { MemoryItem } from "@/types";
 
 interface StarNodeProps {
@@ -12,8 +14,71 @@ interface StarNodeProps {
   dateRangeText: string;
   memories?: MemoryItem[];
   isSelected: boolean;
+  isConstellationActive: boolean;
   onSelect: (nodeIndex: number) => void;
+  onHoverChange?: (hovered: boolean) => void;
 }
+
+const STAR_VERTEX_SHADER = /* glsl */ `
+  varying vec2 vUv;
+  uniform float uScale;
+
+  void main() {
+    vUv = uv;
+    vec4 mvPosition = modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+    mvPosition.xy += position.xy * uScale;
+    gl_Position = projectionMatrix * mvPosition;
+  }
+`;
+
+const STAR_FRAGMENT_SHADER = /* glsl */ `
+  varying vec2 vUv;
+  uniform vec3 uGlowColor;
+  uniform float uHighlight;
+  uniform float uSelected;
+  uniform float uHasMemories;
+  uniform float uConstellationActive;
+  uniform float uTime;
+
+  void main() {
+    vec2 uv = vUv * 2.0 - 1.0;
+    float dist = length(uv);
+    if (dist > 1.0) discard;
+
+    // Smooth boundary fade so diffraction spikes never clip at quad edges
+    float edgeFade = smoothstep(1.0, 0.25, dist);
+
+    // Intense white core + colored astronomical corona
+    float core = exp(-dist * 11.5);
+    float corona = exp(-dist * 4.4) * (0.42 + uConstellationActive * 0.22 + uHighlight * 0.45);
+
+    // 4-point astronomical diffraction spikes
+    float spikeWidth = mix(26.0, 20.0, uHighlight);
+    float spikeLength = mix(3.8, 2.7, uHighlight);
+    float spikeH = exp(-abs(uv.y) * spikeWidth) * exp(-abs(uv.x) * spikeLength);
+    float spikeV = exp(-abs(uv.x) * spikeWidth) * exp(-abs(uv.y) * spikeLength);
+    float spikes = (spikeH + spikeV) * (0.65 + uConstellationActive * 0.25 + uHighlight * 0.55) * edgeFade;
+
+    // Subtle memory beacon ring for populated star nodes
+    float pulse = 1.0 + 0.08 * sin(uTime * 2.2);
+    float memoryRing = exp(-pow((dist - 0.36 * pulse) * 26.0, 2.0)) * uHasMemories * (0.45 + 0.25 * uConstellationActive);
+
+    // Rotating dashed reticle ring when node is actively selected
+    float angle = atan(uv.y, uv.x) - uTime * 0.55;
+    float dash = smoothstep(-0.1, 0.2, sin(angle * 8.0));
+    float selectRing = exp(-pow((dist - 0.58) * 28.0, 2.0)) * dash * uSelected * 0.95;
+
+    float dimFactor = mix(0.55, 1.0, max(uConstellationActive, uHighlight));
+    vec3 color =
+      vec3(1.0) * (core * 1.35 + spikes * 0.5) * dimFactor +
+      uGlowColor * (corona + spikes * 0.72 + memoryRing + selectRing);
+
+    float alpha = clamp((core + corona + spikes + memoryRing + selectRing) * edgeFade, 0.0, 1.0);
+    if (alpha < 0.01) discard;
+
+    gl_FragColor = vec4(color, alpha);
+  }
+`;
 
 export default function StarNode({
   position,
@@ -23,81 +88,120 @@ export default function StarNode({
   dateRangeText,
   memories = [],
   isSelected,
+  isConstellationActive,
   onSelect,
+  onHoverChange,
 }: StarNodeProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const highlightRef = useRef(0);
+  const selectedRef = useRef(0);
+  const scaleRef = useRef(2.8);
+  const activeRef = useRef(isConstellationActive ? 1 : 0);
+
   const latestMemory = memories.length > 0 ? memories[0] : null;
   const hasMemories = memories.length > 0;
 
+  const uniforms = useMemo(
+    () => ({
+      uGlowColor: { value: new THREE.Color(glowColor) },
+      uScale: { value: 2.8 },
+      uHighlight: { value: 0 },
+      uSelected: { value: 0 },
+      uHasMemories: { value: 0 },
+      uConstellationActive: { value: 0 },
+      uTime: { value: 0 },
+    }),
+    [glowColor]
+  );
+
+  useEffect(() => {
+    return () => {
+      document.body.style.cursor = "auto";
+    };
+  }, []);
+
+  useFrame((state, delta) => {
+    const mat = materialRef.current;
+    if (!mat) return;
+
+    const dt = Math.min(delta, 0.05);
+    const targetHighlight = isHovered || isSelected ? 1 : 0;
+    const targetSelected = isSelected ? 1 : 0;
+    const targetActive = isConstellationActive ? 1 : 0;
+    const targetScale =
+      isHovered || isSelected
+        ? 4.1
+        : hasMemories
+        ? 3.35
+        : isConstellationActive
+        ? 2.95
+        : 2.35;
+
+    highlightRef.current = THREE.MathUtils.damp(highlightRef.current, targetHighlight, 10, dt);
+    selectedRef.current = THREE.MathUtils.damp(selectedRef.current, targetSelected, 10, dt);
+    activeRef.current = THREE.MathUtils.damp(activeRef.current, targetActive, 7, dt);
+    scaleRef.current = THREE.MathUtils.damp(scaleRef.current, targetScale, 10, dt);
+
+    mat.uniforms.uHighlight.value = highlightRef.current;
+    mat.uniforms.uSelected.value = selectedRef.current;
+    mat.uniforms.uHasMemories.value = hasMemories ? 1 : 0;
+    mat.uniforms.uConstellationActive.value = activeRef.current;
+    mat.uniforms.uScale.value = scaleRef.current;
+    mat.uniforms.uTime.value = state.clock.elapsedTime;
+  });
+
+  const handlePointerOver = (e: { stopPropagation: () => void }) => {
+    e.stopPropagation();
+    setIsHovered(true);
+    onHoverChange?.(true);
+    document.body.style.cursor = "pointer";
+  };
+
+  const handlePointerOut = (e: { stopPropagation: () => void }) => {
+    e.stopPropagation();
+    setIsHovered(false);
+    onHoverChange?.(false);
+    document.body.style.cursor = "auto";
+  };
+
   return (
     <group position={position}>
-      {/* 3D point light for subtle ambient glow */}
-      <pointLight
-        color={glowColor}
-        intensity={isSelected ? 1.5 : hasMemories ? 1.0 : 0.55}
-        distance={6}
-      />
+      {/* True 3D billboarded 4-point astronomical sparkle star */}
+      <mesh renderOrder={4}>
+        <planeGeometry args={[1, 1]} />
+        <shaderMaterial
+          ref={materialRef}
+          uniforms={uniforms}
+          vertexShader={STAR_VERTEX_SHADER}
+          fragmentShader={STAR_FRAGMENT_SHADER}
+          transparent
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
 
-      <Html center distanceFactor={18} zIndexRange={[10, 0]}>
-        <div className="relative flex items-center justify-center select-none">
-          <button
-            type="button"
-            aria-label={`${constellationId} star node ${nodeIndex + 1} (${dateRangeText}), ${memories.length} memories`}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            onFocus={() => setIsHovered(true)}
-            onBlur={() => setIsHovered(false)}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(nodeIndex);
-            }}
-            className="relative flex items-center justify-center p-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-glow rounded-full"
-          >
-            {/* Rotating ring when selected */}
-            {isSelected && (
+      {/* Generous invisible 3D raycast sphere for effortless hover & click */}
+      <mesh
+        aria-label={`${constellationId} star node ${nodeIndex + 1}`}
+        onPointerOver={handlePointerOver}
+        onPointerOut={handlePointerOut}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(nodeIndex);
+        }}
+      >
+        <sphereGeometry args={[1.45, 12, 12]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+
+      {/* Mount inspection lens HTML ONLY for the hovered star node */}
+      {isHovered && (
+        <Html center distanceFactor={28} zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
+          {latestMemory ? (
+            <div className="-translate-y-16 flex flex-col items-center pointer-events-none select-none animate-radial-preview">
               <div
-                className="absolute -inset-1.5 rounded-full border-2 border-dashed animate-spin-slow pointer-events-none"
-                style={{ borderColor: glowColor }}
-              />
-            )}
-
-            {/* Populated node beacon ring */}
-            {hasMemories && !isSelected && (
-              <div
-                className="absolute inset-0.5 rounded-full border pointer-events-none opacity-65"
-                style={{ borderColor: glowColor }}
-              />
-            )}
-
-            {/* 4-point sparkle star icon */}
-            <div
-              className={`transition-transform duration-300 ${
-                isHovered || isSelected ? "scale-125" : "scale-100"
-              }`}
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-                className="drop-shadow-[0_0_8px_var(--glow)]"
-                style={{ ["--glow" as string]: glowColor }}
-              >
-                <path
-                  d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z"
-                  fill="#FFFFFF"
-                />
-                <circle cx="12" cy="12" r="2.6" fill={glowColor} />
-              </svg>
-            </div>
-          </button>
-
-          {/* Radial Expand Photo Thumbnail on Hover / Focus */}
-          {isHovered && latestMemory && (
-            <div className="absolute -top-24 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-50 animate-radial-preview">
-              <div
-                className="w-[76px] h-[76px] rounded-full overflow-hidden border-2 p-0.5 bg-space-abyss shadow-[0_0_20px_rgba(124,222,228,0.45)]"
+                className="w-[76px] h-[76px] rounded-full overflow-hidden border-2 p-0.5 bg-space-abyss/90 shadow-[0_0_20px_rgba(124,222,228,0.45)]"
                 style={{ borderColor: glowColor }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -108,24 +212,22 @@ export default function StarNode({
                 />
               </div>
 
-              <div className="mt-1.5 px-2.5 py-1 rounded-md bg-black/85 border border-cyan-glow/35 text-[10px] font-mono text-ink-primary whitespace-nowrap shadow-lg">
+              <div className="mt-1.5 px-2.5 py-1 rounded-md bg-space-abyss/90 border border-cyan-glow/35 text-xs font-mono text-ink-primary whitespace-nowrap">
                 <span>{dateRangeText}</span>
                 <span className="text-cyan-glow ml-1.5 font-semibold">
                   ({memories.length} {memories.length === 1 ? "photo" : "photos"})
                 </span>
               </div>
             </div>
-          )}
-
-          {/* Fallback tooltip when hovering without memories */}
-          {isHovered && !latestMemory && (
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-black/85 border border-white/20 text-[10px] font-mono text-ink-primary whitespace-nowrap shadow-lg pointer-events-none z-50">
-              <span>{dateRangeText}</span>
+          ) : (
+            <div className="-translate-y-10 px-2.5 py-1 rounded-md bg-space-abyss/90 border border-white/20 text-xs font-mono text-ink-primary whitespace-nowrap pointer-events-none select-none">
+              <span>Node {String(nodeIndex + 1).padStart(2, "0")}</span>
+              <span className="text-ink-secondary ml-1.5">{dateRangeText}</span>
               <span className="text-ink-muted ml-1.5">(Empty)</span>
             </div>
           )}
-        </div>
-      </Html>
+        </Html>
+      )}
     </group>
   );
 }
