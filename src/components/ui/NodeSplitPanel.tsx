@@ -87,7 +87,7 @@ export default function NodeSplitPanel({
   return (
     <aside
       aria-label={`${constellation.name} Star Node ${nodeIndex + 1} memories`}
-      className="fixed inset-y-0 right-0 z-50 w-full sm:w-[85vw] md:w-[48vw] lg:w-[45vw] bg-space-abyss/90 backdrop-blur-xl border-l border-cyan-glow/30 flex flex-col animate-panel-slide-in"
+      className="fixed inset-y-0 right-0 z-50 w-full sm:w-[85vw] md:w-[48vw] lg:w-[45vw] bg-space-abyss/92 backdrop-blur-md border-l border-cyan-glow/30 flex flex-col animate-panel-slide-in"
     >
       {/* Top Header */}
       <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between gap-4">
@@ -149,6 +149,7 @@ export default function NodeSplitPanel({
                   <img
                     src={currentSlide.imageUrl}
                     alt={currentSlide.caption}
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30 pointer-events-none" />
@@ -227,6 +228,8 @@ export default function NodeSplitPanel({
                         <img
                           src={m.imageUrl}
                           alt={m.caption}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover"
                         />
                       </button>

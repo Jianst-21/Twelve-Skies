@@ -54,6 +54,14 @@ export default function UploadPhotoModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, isPending, onClose]);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   if (!isOpen) return null;
 
   const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(dateStr);

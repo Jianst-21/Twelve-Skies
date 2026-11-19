@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
@@ -17,6 +17,7 @@ const MAX_FOV = 70;
 const OVERVIEW_FOV = 58;
 const CONSTELLATION_FOV = 52;
 const NODE_FOV = 42;
+const EMPTY_NODE_MEMORIES: Record<number, MemoryItem[]> = {};
 
 interface CameraRigProps {
   controlsRef: React.RefObject<OrbitControlsImpl | null>;
@@ -40,6 +41,7 @@ function CameraRig({
   const stepQuat = useRef(new THREE.Quaternion());
   const fullQuat = useRef(new THREE.Quaternion());
   const reducedMotionRef = useRef(false);
+  const lastAppliedFovRef = useRef(-1);
 
   useEffect(() => {
     reducedMotionRef.current = window.matchMedia(
@@ -48,14 +50,20 @@ function CameraRig({
   }, []);
 
   useFrame((state, delta) => {
-    const dt = Math.min(delta, 0.05);
     const persp = state.camera as THREE.PerspectiveCamera;
     const controls = controlsRef.current;
 
-    // 1. Scale orbit drag speed smoothly with current zoom (FOV)
-    if (controls) {
+    // 1. Scale orbit drag speed smoothly only when FOV changes
+    if (controls && lastAppliedFovRef.current !== persp.fov) {
+      lastAppliedFovRef.current = persp.fov;
       controls.rotateSpeed = -0.28 * (persp.fov / CONSTELLATION_FOV);
     }
+
+    if (!isZoomingRef.current && !isFlyingRef.current) {
+      return;
+    }
+
+    const dt = Math.min(delta, 0.05);
 
     // 2. Smooth FOV zoom transition
     if (isZoomingRef.current) {
@@ -134,6 +142,15 @@ export default function SkyCanvas({
   const targetFovRef = useRef(CONSTELLATION_FOV);
   const prevResetTriggerRef = useRef(resetTrigger);
   const hasMountedRef = useRef(false);
+  const [isTabVisible, setIsTabVisible] = useState(true);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      setIsTabVisible(document.visibilityState !== "hidden");
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
 
   const activeDomeConstellation = selectedConstellation
     ? DOME_CONSTELLATION_MAP[selectedConstellation.id] ?? selectedConstellation
@@ -152,17 +169,21 @@ export default function SkyCanvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Group memories by constellation and node
-  const memoriesByConstellationAndNode = memories.reduce((acc, m) => {
-    if (!acc[m.constellationId]) {
-      acc[m.constellationId] = {};
-    }
-    if (!acc[m.constellationId][m.nodeIndex]) {
-      acc[m.constellationId][m.nodeIndex] = [];
-    }
-    acc[m.constellationId][m.nodeIndex].push(m);
-    return acc;
-  }, {} as Record<string, Record<number, MemoryItem[]>>);
+  // Group memories by constellation and node (memoized so React.memo on Constellation holds)
+  const memoriesByConstellationAndNode = useMemo(
+    () =>
+      memories.reduce((acc, m) => {
+        if (!acc[m.constellationId]) {
+          acc[m.constellationId] = {};
+        }
+        if (!acc[m.constellationId][m.nodeIndex]) {
+          acc[m.constellationId][m.nodeIndex] = [];
+        }
+        acc[m.constellationId][m.nodeIndex].push(m);
+        return acc;
+      }, {} as Record<string, Record<number, MemoryItem[]>>),
+    [memories]
+  );
 
   // Compute fly-to direction and FOV when selection, split-view, or reset changes
   useEffect(() => {
@@ -234,7 +255,8 @@ export default function SkyCanvas({
   return (
     <div ref={containerRef} className="w-full h-full relative">
       <Canvas
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
+        frameloop={isTabVisible ? "always" : "never"}
         camera={{
           position: initialCamPos,
           fov: CONSTELLATION_FOV,
@@ -243,6 +265,8 @@ export default function SkyCanvas({
         }}
         gl={{
           antialias: true,
+          stencil: false,
+          powerPreference: "high-performance",
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.12,
         }}
@@ -281,7 +305,8 @@ export default function SkyCanvas({
         {/* Render all 12 constellations across the 3D spherical dome wave */}
         {DOME_CONSTELLATIONS.map((c) => {
           const isSelected = selectedConstellation?.id === c.id;
-          const nodeMemories = memoriesByConstellationAndNode[c.id] || {};
+          const nodeMemories =
+            memoriesByConstellationAndNode[c.id] ?? EMPTY_NODE_MEMORIES;
 
           return (
             <Constellation

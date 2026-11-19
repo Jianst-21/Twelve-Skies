@@ -26,8 +26,10 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
+  const pathname = request.nextUrl.pathname;
+
   // Forward Supabase auth redirects that land on Site URL "/" instead of "/auth/callback"
-  if (request.nextUrl.pathname === "/") {
+  if (pathname === "/") {
     const params = request.nextUrl.searchParams;
     const hasAuthCode = params.has("code");
     const hasOtpToken = params.has("token_hash") && params.has("type");
@@ -41,8 +43,21 @@ export async function updateSession(request: NextRequest) {
   }
 
   const isProtectedPath =
-    request.nextUrl.pathname.startsWith("/sky") ||
-    request.nextUrl.pathname.startsWith("/api/memories");
+    pathname.startsWith("/sky") || pathname.startsWith("/api/memories");
+  const isLoginPath = pathname === "/login";
+
+  // Skip remote Supabase auth round-trip on public routes (e.g. landing page "/")
+  if (!isProtectedPath && !isLoginPath) {
+    return supabaseResponse;
+  }
+
+  // On /login, skip remote auth check when no Supabase session cookie is present
+  if (
+    isLoginPath &&
+    !request.cookies.getAll().some((cookie) => cookie.name.startsWith("sb-"))
+  ) {
+    return supabaseResponse;
+  }
 
   // If Supabase keys are not yet configured in environment, let development pass or redirect
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -59,7 +74,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && request.nextUrl.pathname === "/login") {
+  if (user && isLoginPath) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/sky";
     return NextResponse.redirect(redirectUrl);

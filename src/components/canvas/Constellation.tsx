@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html, Line } from "@react-three/drei";
 import type { Line2, LineSegments2 } from "three-stdlib";
@@ -13,6 +13,10 @@ import {
   computeConstellationLabelPosition,
   computeSegmentHitbox,
 } from "./celestialMath";
+
+const SHARED_SEGMENT_CYLINDER_GEO = new THREE.CylinderGeometry(0.55, 0.55, 1, 6, 1, true);
+const SHARED_HITBOX_MATERIAL = new THREE.MeshBasicMaterial({ visible: false });
+const EMPTY_MEMORIES: MemoryItem[] = [];
 
 interface ConstellationProps {
   constellation: ConstellationData;
@@ -28,7 +32,7 @@ interface ConstellationProps {
 const FORWARD_AXIS = new THREE.Vector3(0, 0, -1);
 const CYLINDER_UP = new THREE.Vector3(0, 1, 0);
 
-export default function Constellation({
+function Constellation({
   constellation,
   memoriesByNode,
   isSelected,
@@ -70,6 +74,15 @@ export default function Constellation({
     [memoriesByNode]
   );
 
+  // Precompute formatted node date windows once per constellation
+  const nodeDateRanges = useMemo(
+    () =>
+      constellation.nodes.map(
+        (_, idx) => getNodeDateRange(constellation.id, idx).formattedRange
+      ),
+    [constellation.id, constellation.nodes]
+  );
+
   // Pairwise segment list for screen-space anti-aliased Drei <Line segments />
   const linePoints = useMemo(() => {
     const pts: [number, number, number][] = [];
@@ -85,6 +98,7 @@ export default function Constellation({
 
   // Invisible trimmed raycast cylinders along each filament for effortless line hover
   const segmentHitboxes = useMemo(() => {
+    if (!interactive) return [];
     return constellation.lines
       .map(([fromIdx, toIdx], lineIdx) => {
         const fromPos = constellation.nodes[fromIdx];
@@ -104,11 +118,11 @@ export default function Constellation({
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
-  }, [constellation]);
+  }, [constellation, interactive]);
 
   const labelPosition = useMemo(
-    () => computeConstellationLabelPosition(constellation, 2.7),
-    [constellation]
+    () => (showNameplate ? computeConstellationLabelPosition(constellation, 2.7) : null),
+    [constellation, showNameplate]
   );
 
   const centerDir = useMemo(
@@ -116,17 +130,32 @@ export default function Constellation({
     [constellation.center]
   );
 
+  const handleStarHoverChange = useCallback((idx: number, hovered: boolean) => {
+    setHoveredNodeIndex((curr) => (hovered ? idx : curr === idx ? null : curr));
+  }, []);
+
+  const handleStarSelect = useCallback(
+    (nodeIdx: number) => {
+      if (!isSelected) {
+        onSelectConstellation(constellation);
+      }
+      onSelectNode(nodeIdx);
+    },
+    [constellation, isSelected, onSelectConstellation, onSelectNode]
+  );
+
   // Hide HTML nameplates behind the camera + smoothly warm/fade uniform constellation glow
   useFrame(({ camera }, delta) => {
-    camForwardRef.current.copy(FORWARD_AXIS).applyQuaternion(camera.quaternion);
-    const dot = camForwardRef.current.dot(centerDir);
-    const nextInFront = dot > 0.22;
-    if (nextInFront !== inFrontRef.current) {
-      inFrontRef.current = nextInFront;
-      setIsInFront(nextInFront);
+    if (showNameplate) {
+      camForwardRef.current.copy(FORWARD_AXIS).applyQuaternion(camera.quaternion);
+      const dot = camForwardRef.current.dot(centerDir);
+      const nextInFront = dot > 0.22;
+      if (nextInFront !== inFrontRef.current) {
+        inFrontRef.current = nextInFront;
+        setIsInFront(nextInFront);
+      }
     }
 
-    const dt = Math.min(delta, 0.05);
     const targetBaseOpacity = isSelected
       ? isHovered
         ? 1.0
@@ -142,29 +171,42 @@ export default function Constellation({
       ? 0.3
       : 0;
 
+    const baseDiff = Math.abs(baseOpacityRef.current - targetBaseOpacity);
+    const glowDiff = Math.abs(glowOpacityRef.current - targetGlowOpacity);
+    if (baseDiff < 0.001 && glowDiff < 0.001) {
+      if (glowLineRef.current) {
+        const shouldShowGlow = glowOpacityRef.current > 0.005;
+        if (glowLineRef.current.visible !== shouldShowGlow) {
+          glowLineRef.current.visible = shouldShowGlow;
+        }
+      }
+      return;
+    }
+
+    const dt = Math.min(delta, 0.05);
     if (reducedMotionRef.current) {
       baseOpacityRef.current = targetBaseOpacity;
       glowOpacityRef.current = targetGlowOpacity;
     } else {
-      baseOpacityRef.current = THREE.MathUtils.damp(
-        baseOpacityRef.current,
-        targetBaseOpacity,
-        10,
-        dt
-      );
-      glowOpacityRef.current = THREE.MathUtils.damp(
-        glowOpacityRef.current,
-        targetGlowOpacity,
-        10,
-        dt
-      );
+      baseOpacityRef.current =
+        baseDiff < 0.002
+          ? targetBaseOpacity
+          : THREE.MathUtils.damp(baseOpacityRef.current, targetBaseOpacity, 10, dt);
+      glowOpacityRef.current =
+        glowDiff < 0.002
+          ? targetGlowOpacity
+          : THREE.MathUtils.damp(glowOpacityRef.current, targetGlowOpacity, 10, dt);
     }
 
     if (baseLineRef.current?.material) {
       baseLineRef.current.material.opacity = baseOpacityRef.current;
     }
-    if (glowLineRef.current?.material) {
-      glowLineRef.current.material.opacity = glowOpacityRef.current;
+    if (glowLineRef.current) {
+      const showGlow = glowOpacityRef.current > 0.005;
+      glowLineRef.current.visible = showGlow;
+      if (showGlow && glowLineRef.current.material) {
+        glowLineRef.current.material.opacity = glowOpacityRef.current;
+      }
     }
   });
 
@@ -196,18 +238,22 @@ export default function Constellation({
           lineWidth={isHovered ? 6.4 : 5.0}
           transparent
           opacity={isSelected ? 0.2 : 0}
+          visible={isSelected || isHovered}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
       )}
 
-      {/* Invisible trimmed raycast cylinders so hovering or clicking any line lights the whole constellation */}
+      {/* Invisible trimmed raycast cylinders (shared geometry + material.visible=false = 0 GPU draw calls) */}
       {interactive &&
         segmentHitboxes.map((seg) => (
           <mesh
             key={`${constellation.id}-seg-hit-${seg.lineIdx}`}
+            geometry={SHARED_SEGMENT_CYLINDER_GEO}
+            material={SHARED_HITBOX_MATERIAL}
             position={seg.midpoint}
             quaternion={seg.quaternion}
+            scale={[1, seg.length, 1]}
             onPointerOver={(e) => {
               e.stopPropagation();
               setHoveredLineIndex(seg.lineIdx);
@@ -222,14 +268,11 @@ export default function Constellation({
               e.stopPropagation();
               onSelectConstellation(constellation);
             }}
-          >
-            <cylinderGeometry args={[0.55, 0.55, seg.length, 6, 1, true]} />
-            <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-          </mesh>
+          />
         ))}
 
       {/* Offset Astronomical Nameplate (positioned cleanly below lowest star) */}
-      {showNameplate && isInFront && (
+      {showNameplate && labelPosition && isInFront && (
         <group position={labelPosition}>
           <Html center zIndexRange={[5, 0]}>
             <button
@@ -271,8 +314,7 @@ export default function Constellation({
 
       {/* 3D 4-Point Sparkle Star Nodes */}
       {constellation.nodes.map((pos, idx) => {
-        const dateRange = getNodeDateRange(constellation.id, idx);
-        const nodeMemories = memoriesByNode[idx] || [];
+        const nodeMemories = memoriesByNode[idx] ?? EMPTY_MEMORIES;
         const isNodeSelected = isSelected && selectedNodeIndex === idx;
 
         return (
@@ -282,25 +324,18 @@ export default function Constellation({
             nodeIndex={idx}
             constellationId={constellation.id}
             glowColor={constellation.glowColor}
-            dateRangeText={dateRange.formattedRange}
+            dateRangeText={nodeDateRanges[idx]}
             memories={nodeMemories}
             isSelected={isNodeSelected}
             isConstellationActive={isActive}
             interactive={interactive}
-            onHoverChange={(hovered) => {
-              setHoveredNodeIndex((curr) =>
-                hovered ? idx : curr === idx ? null : curr
-              );
-            }}
-            onSelect={(nodeIdx) => {
-              if (!isSelected) {
-                onSelectConstellation(constellation);
-              }
-              onSelectNode(nodeIdx);
-            }}
+            onHoverChange={handleStarHoverChange}
+            onSelect={handleStarSelect}
           />
         );
       })}
     </group>
   );
 }
+
+export default memo(Constellation);

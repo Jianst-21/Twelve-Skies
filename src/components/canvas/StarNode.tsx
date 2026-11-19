@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import { MemoryItem } from "@/types";
+
+const SHARED_STAR_PLANE_GEO = new THREE.PlaneGeometry(1, 1);
+const SHARED_HITBOX_SPHERE_GEO = new THREE.SphereGeometry(1.05, 8, 6);
+const SHARED_HITBOX_MATERIAL = new THREE.MeshBasicMaterial({ visible: false });
+const EMPTY_MEMORIES: MemoryItem[] = [];
 
 interface StarNodeProps {
   position: [number, number, number];
@@ -17,7 +22,7 @@ interface StarNodeProps {
   isConstellationActive: boolean;
   interactive?: boolean;
   onSelect: (nodeIndex: number) => void;
-  onHoverChange?: (hovered: boolean) => void;
+  onHoverChange?: (nodeIndex: number, hovered: boolean) => void;
 }
 
 const STAR_VERTEX_SHADER = /* glsl */ `
@@ -99,6 +104,7 @@ function HoverMemoryThumb({
         <img
           src={src}
           alt={alt}
+          decoding="async"
           onError={() => setFailed(true)}
           className="w-full h-full object-cover rounded-full"
         />
@@ -107,13 +113,13 @@ function HoverMemoryThumb({
   );
 }
 
-export default function StarNode({
+function StarNode({
   position,
   nodeIndex,
   constellationId,
   glowColor,
   dateRangeText,
-  memories = [],
+  memories = EMPTY_MEMORIES,
   isSelected,
   isConstellationActive,
   interactive = true,
@@ -124,23 +130,33 @@ export default function StarNode({
   const [isPopupMounted, setIsPopupMounted] = useState(false);
   const exitTimerRef = useRef<number | null>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const highlightRef = useRef(0);
-  const hoveredRef = useRef(0);
-  const scaleRef = useRef(2.8);
-  const activeRef = useRef(isConstellationActive ? 1 : 0);
 
   const latestMemory = memories.length > 0 ? memories[0] : null;
   const hasMemories = memories.length > 0;
+  const initialScale = isSelected
+    ? 4.1
+    : hasMemories
+    ? 3.35
+    : isConstellationActive
+    ? 2.95
+    : 2.35;
+
+  const highlightRef = useRef(isSelected ? 1 : 0);
+  const hoveredRef = useRef(0);
+  const scaleRef = useRef(initialScale);
+  const activeRef = useRef(isConstellationActive ? 1 : 0);
 
   const uniforms = useMemo(
     () => ({
       uGlowColor: { value: new THREE.Color(glowColor) },
-      uScale: { value: 2.8 },
-      uHighlight: { value: 0 },
+      uScale: { value: initialScale },
+      uHighlight: { value: isSelected ? 1 : 0 },
       uHovered: { value: 0 },
-      uHasMemories: { value: 0 },
-      uConstellationActive: { value: 0 },
+      uHasMemories: { value: hasMemories ? 1 : 0 },
+      uConstellationActive: { value: isConstellationActive ? 1 : 0 },
     }),
+    // Only recreate uniforms when glowColor changes; other uniforms are smoothly damped in useFrame
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [glowColor]
   );
 
@@ -157,10 +173,10 @@ export default function StarNode({
     const mat = materialRef.current;
     if (!mat) return;
 
-    const dt = Math.min(delta, 0.05);
     const targetHighlight = isHovered || isSelected ? 1 : 0;
     const targetHovered = isHovered ? 1 : 0;
     const targetActive = isConstellationActive ? 1 : 0;
+    const targetHasMemories = hasMemories ? 1 : 0;
     const targetScale =
       isHovered || isSelected
         ? 4.1
@@ -170,14 +186,34 @@ export default function StarNode({
         ? 2.95
         : 2.35;
 
-    highlightRef.current = THREE.MathUtils.damp(highlightRef.current, targetHighlight, 10, dt);
-    hoveredRef.current = THREE.MathUtils.damp(hoveredRef.current, targetHovered, 10, dt);
-    activeRef.current = THREE.MathUtils.damp(activeRef.current, targetActive, 7, dt);
-    scaleRef.current = THREE.MathUtils.damp(scaleRef.current, targetScale, 10, dt);
+    const hDiff = Math.abs(highlightRef.current - targetHighlight);
+    const hvDiff = Math.abs(hoveredRef.current - targetHovered);
+    const aDiff = Math.abs(activeRef.current - targetActive);
+    const sDiff = Math.abs(scaleRef.current - targetScale);
+
+    if (
+      hDiff < 0.001 &&
+      hvDiff < 0.001 &&
+      aDiff < 0.001 &&
+      sDiff < 0.001 &&
+      mat.uniforms.uHasMemories.value === targetHasMemories
+    ) {
+      return;
+    }
+
+    const dt = Math.min(delta, 0.05);
+    highlightRef.current =
+      hDiff < 0.002 ? targetHighlight : THREE.MathUtils.damp(highlightRef.current, targetHighlight, 10, dt);
+    hoveredRef.current =
+      hvDiff < 0.002 ? targetHovered : THREE.MathUtils.damp(hoveredRef.current, targetHovered, 10, dt);
+    activeRef.current =
+      aDiff < 0.002 ? targetActive : THREE.MathUtils.damp(activeRef.current, targetActive, 7, dt);
+    scaleRef.current =
+      sDiff < 0.002 ? targetScale : THREE.MathUtils.damp(scaleRef.current, targetScale, 10, dt);
 
     mat.uniforms.uHighlight.value = highlightRef.current;
     mat.uniforms.uHovered.value = hoveredRef.current;
-    mat.uniforms.uHasMemories.value = hasMemories ? 1 : 0;
+    mat.uniforms.uHasMemories.value = targetHasMemories;
     mat.uniforms.uConstellationActive.value = activeRef.current;
     mat.uniforms.uScale.value = scaleRef.current;
   });
@@ -190,14 +226,14 @@ export default function StarNode({
     }
     setIsPopupMounted(true);
     setIsHovered(true);
-    onHoverChange?.(true);
+    onHoverChange?.(nodeIndex, true);
     document.body.style.cursor = "pointer";
   };
 
   const handlePointerOut = (e: { stopPropagation: () => void }) => {
     e.stopPropagation();
     setIsHovered(false);
-    onHoverChange?.(false);
+    onHoverChange?.(nodeIndex, false);
     document.body.style.cursor = "auto";
 
     const reducedMotion =
@@ -220,9 +256,8 @@ export default function StarNode({
 
   return (
     <group position={position}>
-      {/* True 3D billboarded 4-point astronomical sparkle star */}
-      <mesh renderOrder={4}>
-        <planeGeometry args={[1, 1]} />
+      {/* True 3D billboarded 4-point astronomical sparkle star (shared unit quad geometry) */}
+      <mesh geometry={SHARED_STAR_PLANE_GEO} renderOrder={4}>
         <shaderMaterial
           ref={materialRef}
           uniforms={uniforms}
@@ -234,9 +269,11 @@ export default function StarNode({
         />
       </mesh>
 
-      {/* Generous invisible 3D raycast sphere sized for clean, non-overlapping hover */}
+      {/* Invisible 3D raycast sphere (shared geometry + material.visible=false = 0 GPU draw calls) */}
       {interactive && (
         <mesh
+          geometry={SHARED_HITBOX_SPHERE_GEO}
+          material={SHARED_HITBOX_MATERIAL}
           aria-label={`${constellationId} star node ${nodeIndex + 1}`}
           onPointerOver={handlePointerOver}
           onPointerOut={handlePointerOut}
@@ -244,10 +281,7 @@ export default function StarNode({
             e.stopPropagation();
             onSelect(nodeIndex);
           }}
-        >
-          <sphereGeometry args={[1.05, 14, 14]} />
-          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-        </mesh>
+        />
       )}
 
       {/* Two-way star-origin hover popup (blooms from star core, retracts back into star core) */}
@@ -309,3 +343,5 @@ export default function StarNode({
     </group>
   );
 }
+
+export default memo(StarNode);

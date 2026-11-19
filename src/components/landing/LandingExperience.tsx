@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { ILLUSTRATIVE_MEMORIES } from "@/data/illustrativeMemories";
 import LandingHeader from "@/components/landing/LandingHeader";
@@ -31,23 +31,29 @@ export default function LandingExperience() {
   const [focusedNodeIndex, setFocusedNodeIndex] = useState<number | null>(null);
   const [lockScrollDrift, setLockScrollDrift] = useState<boolean>(false);
 
-  const handleSelectConstellation = (constellationId: string) => {
+  const handleSelectConstellation = useCallback((constellationId: string) => {
     setFocusedConstellationId(constellationId);
     setFocusedNodeIndex(null);
     setLockScrollDrift(false);
-  };
+  }, []);
 
-  const handleSelectStarNode = (constellationId: string, nodeIndex: number) => {
-    setFocusedConstellationId(constellationId);
-    setFocusedNodeIndex(nodeIndex);
-    setLockScrollDrift(false);
-  };
+  const handleSelectStarNode = useCallback(
+    (constellationId: string, nodeIndex: number) => {
+      setFocusedConstellationId(constellationId);
+      setFocusedNodeIndex(nodeIndex);
+      setLockScrollDrift(false);
+    },
+    []
+  );
 
-  const handleDateMapped = (constellationId: string, nodeIndex: number) => {
-    setFocusedConstellationId(constellationId);
-    setFocusedNodeIndex(nodeIndex);
-    setLockScrollDrift(true);
-  };
+  const handleDateMapped = useCallback(
+    (constellationId: string, nodeIndex: number) => {
+      setFocusedConstellationId(constellationId);
+      setFocusedNodeIndex(nodeIndex);
+      setLockScrollDrift(true);
+    },
+    []
+  );
 
   return (
     <div className="relative min-h-screen bg-space-black text-ink-primary">

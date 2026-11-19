@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { ILLUSTRATIVE_MEMORIES } from "@/data/illustrativeMemories";
@@ -17,6 +17,8 @@ const ORBIT_RADIUS = 0.1;
 const LANDING_FOV = 52;
 const IDENTITY_QUAT = new THREE.Quaternion();
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
+const EMPTY_NODE_MEMORIES: Record<number, MemoryItem[]> = {};
+const NOOP_SELECT_CONSTELLATION = () => {};
 
 interface LandingCameraRigProps {
   focusedConstellationId: string;
@@ -35,59 +37,109 @@ function LandingCameraRig({
   const stepQuat = useRef(new THREE.Quaternion());
   const reducedMotionRef = useRef(false);
   const initializedRef = useRef(false);
+  const needsGoalRecomputeRef = useRef(true);
+  const settledRef = useRef(false);
+
+  // Cached scroll and viewport metrics (updated via passive listeners, never read inside useFrame)
+  const scrollMetricsRef = useRef({
+    scrollY: 0,
+    maxScroll: 1,
+    isDesktop: true,
+  });
 
   useEffect(() => {
     reducedMotionRef.current = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
+
+    const updateViewport = () => {
+      scrollMetricsRef.current.maxScroll = Math.max(
+        document.documentElement.scrollHeight - window.innerHeight,
+        1
+      );
+      scrollMetricsRef.current.isDesktop = window.innerWidth >= 1024;
+      scrollMetricsRef.current.scrollY = window.scrollY;
+      needsGoalRecomputeRef.current = true;
+      settledRef.current = false;
+    };
+
+    const handleScroll = () => {
+      scrollMetricsRef.current.scrollY = window.scrollY;
+      needsGoalRecomputeRef.current = true;
+      settledRef.current = false;
+    };
+
+    updateViewport();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", updateViewport, { passive: true });
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(updateViewport);
+      resizeObserver.observe(document.documentElement);
+    }
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", updateViewport);
+      resizeObserver?.disconnect();
+    };
   }, []);
 
+  useEffect(() => {
+    needsGoalRecomputeRef.current = true;
+    settledRef.current = false;
+  }, [focusedConstellationId, focusedNodeIndex, lockScrollDrift]);
+
   useFrame((state, delta) => {
-    const dt = Math.min(delta, 0.05);
+    if (settledRef.current && !needsGoalRecomputeRef.current) {
+      return;
+    }
+
     const persp = state.camera as THREE.PerspectiveCamera;
 
-    const targetConstellation =
-      DOME_CONSTELLATION_MAP[focusedConstellationId] ?? DOME_CONSTELLATIONS[0];
+    if (needsGoalRecomputeRef.current) {
+      needsGoalRecomputeRef.current = false;
 
-    const maxScroll = Math.max(
-      document.documentElement.scrollHeight - window.innerHeight,
-      1
-    );
-    const rawProgress = Math.max(0, Math.min(1, window.scrollY / maxScroll));
-    const isDesktop = window.innerWidth >= 1024;
+      const targetConstellation =
+        DOME_CONSTELLATION_MAP[focusedConstellationId] ?? DOME_CONSTELLATIONS[0];
+      const { scrollY, maxScroll, isDesktop } = scrollMetricsRef.current;
+      const rawProgress = Math.max(0, Math.min(1, scrollY / maxScroll));
 
-    // Frame the active constellation in the open upper-right sky on desktop hero
-    // so it stays clear of both the left headline and bottom-right sample card.
-    const heroWeight = Math.max(0, 1 - rawProgress * 2.6);
-    const horizontalShiftTan = isDesktop ? -0.26 * heroWeight : 0;
-    const verticalShiftTan = isDesktop ? -0.1 * heroWeight : 0;
+      // Frame the active constellation in the open upper-right sky on desktop hero
+      // so it stays clear of both the left headline and bottom-right sample card.
+      const heroWeight = Math.max(0, 1 - rawProgress * 2.6);
+      const horizontalShiftTan = isDesktop ? -0.26 * heroWeight : 0;
+      const verticalShiftTan = isDesktop ? -0.1 * heroWeight : 0;
 
-    const effectiveScroll =
-      reducedMotionRef.current || lockScrollDrift ? 0 : rawProgress;
+      const effectiveScroll =
+        reducedMotionRef.current || lockScrollDrift ? 0 : rawProgress;
 
-    const nodePos =
-      focusedNodeIndex !== null && targetConstellation.nodes[focusedNodeIndex]
-        ? targetConstellation.nodes[focusedNodeIndex]
-        : null;
+      const nodePos =
+        focusedNodeIndex !== null && targetConstellation.nodes[focusedNodeIndex]
+          ? targetConstellation.nodes[focusedNodeIndex]
+          : null;
 
-    const desired = computeLandingCameraDirection(
-      targetConstellation.center,
-      nodePos,
-      {
-        horizontalShiftTan,
-        verticalShiftTan,
-        scrollProgress: effectiveScroll,
-        maxYawRad: 0.28,
-        maxPitchRad: 0.08,
-      }
-    );
-    goalDir.current.set(desired[0], desired[1], desired[2]).normalize();
+      const desired = computeLandingCameraDirection(
+        targetConstellation.center,
+        nodePos,
+        {
+          horizontalShiftTan,
+          verticalShiftTan,
+          scrollProgress: effectiveScroll,
+          maxYawRad: 0.28,
+          maxPitchRad: 0.08,
+        }
+      );
+      goalDir.current.set(desired[0], desired[1], desired[2]).normalize();
+    }
 
     if (!initializedRef.current) {
       initializedRef.current = true;
       currentDir.current.copy(goalDir.current);
       persp.position.copy(currentDir.current).multiplyScalar(-ORBIT_RADIUS);
       persp.lookAt(0, 0, 0);
+      settledRef.current = true;
       return;
     }
 
@@ -99,7 +151,9 @@ function LandingCameraRig({
 
     if (reducedMotionRef.current || dot > 0.999995) {
       currentDir.current.copy(goalDir.current);
+      settledRef.current = true;
     } else {
+      const dt = Math.min(delta, 0.05);
       if (dot < -0.999) {
         fullQuat.current.setFromAxisAngle(WORLD_UP, Math.PI);
       } else {
@@ -130,6 +184,7 @@ export default function LandingSkyBackdrop({
   lockScrollDrift,
   onSelectStarNode,
 }: LandingSkyBackdropProps) {
+  const [isTabVisible, setIsTabVisible] = useState(true);
   const [webglSupported] = useState(() => {
     if (typeof window === "undefined") return true;
     try {
@@ -142,6 +197,21 @@ export default function LandingSkyBackdrop({
       return false;
     }
   });
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      setIsTabVisible(document.visibilityState !== "hidden");
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
+  const handleSelectFocusedNode = useCallback(
+    (nodeIdx: number) => {
+      onSelectStarNode(focusedConstellationId, nodeIdx);
+    },
+    [focusedConstellationId, onSelectStarNode]
+  );
 
   // Map illustrative sample entries into MemoryItem shape so the exact 3D StarNode
   // memory beacon rings and circular hover-bloom previews match /sky identically.
@@ -202,7 +272,8 @@ export default function LandingSkyBackdrop({
       style={{ touchAction: "pan-y" }}
     >
       <Canvas
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
+        frameloop={isTabVisible ? "always" : "never"}
         camera={{
           position: initialCamPos,
           fov: LANDING_FOV,
@@ -211,6 +282,8 @@ export default function LandingSkyBackdrop({
         }}
         gl={{
           antialias: true,
+          stencil: false,
+          powerPreference: "high-performance",
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.12,
         }}
@@ -218,7 +291,7 @@ export default function LandingSkyBackdrop({
       >
         <color attach="background" args={["#000000"]} />
 
-        {/* Exact procedural Milky Way dome + 4,200 J2000 catalog stars + armillary rings */}
+        {/* Baked Milky Way dome + J2000 catalog stars + merged armillary rings */}
         <SpaceDome />
 
         <LandingCameraRig
@@ -230,7 +303,8 @@ export default function LandingSkyBackdrop({
         {/* Exact 12 3D constellations and 4-point diffraction-spike StarNodes from /sky */}
         {DOME_CONSTELLATIONS.map((c) => {
           const isFocused = c.id === focusedConstellationId;
-          const nodeMemories = sampleMemoriesByConstellation[c.id] || {};
+          const nodeMemories =
+            sampleMemoriesByConstellation[c.id] ?? EMPTY_NODE_MEMORIES;
           return (
             <Constellation
               key={c.id}
@@ -240,8 +314,8 @@ export default function LandingSkyBackdrop({
               selectedNodeIndex={isFocused ? focusedNodeIndex : null}
               showNameplate={false}
               interactive={isFocused}
-              onSelectConstellation={() => {}}
-              onSelectNode={(nodeIdx) => onSelectStarNode(c.id, nodeIdx)}
+              onSelectConstellation={NOOP_SELECT_CONSTELLATION}
+              onSelectNode={handleSelectFocusedNode}
             />
           );
         })}

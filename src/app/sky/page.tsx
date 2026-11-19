@@ -8,19 +8,27 @@ import { ConstellationData, MemoryItem } from "@/types";
 import { getConstellationAndNode, getNodeDateRange } from "@/lib/dateDistributor";
 import Navbar from "@/components/ui/Navbar";
 import BottomPagination from "@/components/ui/BottomPagination";
-import NodeSplitPanel from "@/components/ui/NodeSplitPanel";
-import UploadPhotoModal from "@/components/ui/UploadPhotoModal";
 import CelestialLogo from "@/components/ui/CelestialLogo";
 import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
+
+const NodeSplitPanel = dynamic(() => import("@/components/ui/NodeSplitPanel"), {
+  ssr: false,
+});
+
+const UploadPhotoModal = dynamic(() => import("@/components/ui/UploadPhotoModal"), {
+  ssr: false,
+});
 
 const SkyCanvas = dynamic(() => import("@/components/canvas/SkyCanvas"), {
   ssr: false,
   loading: () => (
-    <div className="relative w-full h-full flex flex-col items-center justify-center bg-space-black text-ink-primary overflow-hidden">
-      <div
-        className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat opacity-45 mix-blend-screen"
-        style={{ backgroundImage: "url('/images/neowise/10-star-mini.jpg')" }}
-      />
+    <div
+      className="relative w-full h-full flex flex-col items-center justify-center bg-space-black text-ink-primary overflow-hidden"
+      style={{
+        backgroundImage:
+          "radial-gradient(ellipse at 50% 45%, rgba(4, 9, 30, 0.9) 0%, rgba(0, 0, 0, 1) 72%)",
+      }}
+    >
       <div className="relative z-10 w-10 h-10 rounded-full border-2 border-cyan-glow border-t-transparent animate-spin mb-4" />
       <span className="relative z-10 font-display tracking-[0.18em] text-cyan-glow uppercase text-xs font-semibold">
         Preparing Celestial Dome...
@@ -178,15 +186,15 @@ export default function SkyPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isUploadOpen, isIndexOpen, selectedNodeIndex, selectedConstellation.id]);
 
-  const handleSelectConstellation = (c: ConstellationData) => {
+  const handleSelectConstellation = useCallback((c: ConstellationData) => {
     setSelectedConstellation(c);
     setSelectedNodeIndex(null);
-  };
+  }, []);
 
-  const handleSelectNode = (nodeIdx: number) => {
+  const handleSelectNode = useCallback((nodeIdx: number) => {
     setSelectedNodeIndex(nodeIdx);
     setIsIndexOpen(false);
-  };
+  }, []);
 
   const handleCloseSplitView = () => {
     setSelectedNodeIndex(null);
@@ -340,7 +348,7 @@ export default function SkyPage() {
       {isIndexOpen && (
         <aside
           aria-label="Vault Memory Index"
-          className="fixed top-24 left-4 sm:left-8 z-40 w-[92vw] max-w-sm max-h-[65vh] rounded-xl bg-space-abyss/95 border border-cyan-glow/30 backdrop-blur-xl flex flex-col overflow-hidden"
+          className="fixed top-24 left-4 sm:left-8 z-40 w-[92vw] max-w-sm max-h-[65vh] rounded-xl bg-space-abyss/95 border border-cyan-glow/30 backdrop-blur-md flex flex-col overflow-hidden"
         >
           <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
             <div>
@@ -385,6 +393,8 @@ export default function SkyPage() {
                       <img
                         src={m.imageUrl}
                         alt={m.caption}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover"
                       />
                     </div>
