@@ -10,18 +10,18 @@ import { ConstellationData, MemoryItem } from "@/types";
 import SpaceDome from "./SpaceDome";
 import Constellation from "./Constellation";
 import {
-  computeErgonomicConstellations,
+  computeDomeConstellations,
   computeTargetDirection,
 } from "./celestialMath";
 
-const ERGONOMIC_CONSTELLATIONS = computeErgonomicConstellations(CONSTELLATIONS, {
+const DOME_CONSTELLATIONS = computeDomeConstellations(CONSTELLATIONS, {
+  sphereRadius: 52,
+  waveElevationDeg: 46,
   minIntraDistance: 4.8,
-  minInterDistance: 7.5,
-  sphereRadius: 45,
 });
 
-const ERGONOMIC_CONSTELLATION_MAP: Record<string, ConstellationData> =
-  ERGONOMIC_CONSTELLATIONS.reduce((acc, c) => {
+const DOME_CONSTELLATION_MAP: Record<string, ConstellationData> =
+  DOME_CONSTELLATIONS.reduce((acc, c) => {
     acc[c.id] = c;
     return acc;
   }, {} as Record<string, ConstellationData>);
@@ -150,13 +150,13 @@ export default function SkyCanvas({
   const prevResetTriggerRef = useRef(resetTrigger);
   const hasMountedRef = useRef(false);
 
-  const activeErgonomicConstellation = selectedConstellation
-    ? ERGONOMIC_CONSTELLATION_MAP[selectedConstellation.id] ?? selectedConstellation
+  const activeDomeConstellation = selectedConstellation
+    ? DOME_CONSTELLATION_MAP[selectedConstellation.id] ?? selectedConstellation
     : null;
 
   const initialCamPos = useMemo<[number, number, number]>(() => {
     const startConstellation =
-      activeErgonomicConstellation ?? ERGONOMIC_CONSTELLATIONS[0];
+      activeDomeConstellation ?? DOME_CONSTELLATIONS[0];
     const dir = computeTargetDirection(startConstellation.center, null, 0);
     return [
       -dir[0] * ORBIT_RADIUS,
@@ -181,11 +181,11 @@ export default function SkyCanvas({
 
   // Compute fly-to direction and FOV when selection, split-view, or reset changes
   useEffect(() => {
-    if (!activeErgonomicConstellation) return;
+    if (!activeDomeConstellation) return;
 
     if (!hasMountedRef.current) {
       hasMountedRef.current = true;
-      const initDir = computeTargetDirection(activeErgonomicConstellation.center, null, 0);
+      const initDir = computeTargetDirection(activeDomeConstellation.center, null, 0);
       goalDirRef.current.set(initDir[0], initDir[1], initDir[2]).normalize();
       if (selectedNodeIndex === null) {
         return;
@@ -205,8 +205,8 @@ export default function SkyCanvas({
 
     const nodePos =
       selectedNodeIndex !== null &&
-      activeErgonomicConstellation.nodes[selectedNodeIndex]
-        ? activeErgonomicConstellation.nodes[selectedNodeIndex]
+      activeDomeConstellation.nodes[selectedNodeIndex]
+        ? activeDomeConstellation.nodes[selectedNodeIndex]
         : null;
 
     // On desktop split-view (right 45vw panel open), shift look target right so
@@ -218,13 +218,13 @@ export default function SkyCanvas({
     }
 
     const dir = computeTargetDirection(
-      activeErgonomicConstellation.center,
+      activeDomeConstellation.center,
       nodePos,
       splitOffsetTan
     );
     goalDirRef.current.set(dir[0], dir[1], dir[2]).normalize();
     isFlyingRef.current = true;
-  }, [activeErgonomicConstellation, selectedNodeIndex, isSplitView, resetTrigger]);
+  }, [activeDomeConstellation, selectedNodeIndex, isSplitView, resetTrigger]);
 
   // Smooth wheel-to-FOV zoom inside the celestial sphere
   useEffect(() => {
@@ -278,8 +278,8 @@ export default function SkyCanvas({
           rotateSpeed={-0.28}
           minDistance={ORBIT_RADIUS}
           maxDistance={ORBIT_RADIUS}
-          minPolarAngle={0.45}
-          maxPolarAngle={Math.PI - 0.45}
+          minPolarAngle={0.22}
+          maxPolarAngle={Math.PI - 0.22}
           onStart={() => {
             isFlyingRef.current = false;
           }}
@@ -293,8 +293,8 @@ export default function SkyCanvas({
           targetFovRef={targetFovRef}
         />
 
-        {/* Render all 12 constellations with ergonomic celestial spacing */}
-        {ERGONOMIC_CONSTELLATIONS.map((c) => {
+        {/* Render all 12 constellations across the 3D spherical dome wave */}
+        {DOME_CONSTELLATIONS.map((c) => {
           const isSelected = selectedConstellation?.id === c.id;
           const nodeMemories = memoriesByConstellationAndNode[c.id] || {};
 

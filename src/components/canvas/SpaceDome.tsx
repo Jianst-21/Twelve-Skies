@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { BRIGHT_STARS } from "@/data/brightStars";
 import { generateRealCatalogStarfield } from "./celestialMath";
 
-const ECLIPTIC_OBLIQUITY_RAD = (23.439 * Math.PI) / 180;
+const DOME_TIER_RAD = (46 * Math.PI) / 180;
 
 const SKY_VERTEX_SHADER = /* glsl */ `
   varying vec3 vDir;
@@ -156,7 +156,7 @@ export default function SpaceDome() {
   }, []);
 
   const starData = useMemo(
-    () => generateRealCatalogStarfield(BRIGHT_STARS, 4200, 88, 120, 12026),
+    () => generateRealCatalogStarfield(BRIGHT_STARS, 4200, 96, 132, 12026),
     []
   );
 
@@ -179,17 +179,24 @@ export default function SpaceDome() {
     []
   );
 
-  // Calm equatorial horizon ring + 30-degree house ticks at sphere radius 46.5
+  // Subtle full-sphere celestial dome parallels (+46 deg, 0 deg, -46 deg) + prime meridians
   const armillaryGeometries = useMemo(() => {
-    const radius = 46.5;
-    const eclipticRing = createRingPoints(radius, 128, "xz", 0);
+    const radius = 54;
+    const tierRadius = radius * Math.cos(DOME_TIER_RAD);
+    const tierY = radius * Math.sin(DOME_TIER_RAD);
 
-    // 36 ecliptic degree ticks (every 10 deg; longer every 30 deg)
+    const equatorRing = createRingPoints(radius, 128, "xz", 0);
+    const upperParallel = createRingPoints(tierRadius, 96, "xz", tierY);
+    const lowerParallel = createRingPoints(tierRadius, 96, "xz", -tierY);
+    const meridianXY = createRingPoints(radius, 128, "xy", 0);
+    const meridianYZ = createRingPoints(radius, 128, "yz", 0);
+
+    // Subtle 30-degree sector ticks around the equatorial dome ring
     const tickPositions: THREE.Vector3[] = [];
-    for (let deg = 0; deg < 360; deg += 10) {
+    for (let deg = 0; deg < 360; deg += 15) {
       const rad = (deg * Math.PI) / 180;
-      const isHouseDivider = deg % 30 === 0;
-      const halfTick = isHouseDivider ? 0.85 : 0.35;
+      const isSectorDivider = deg % 30 === 0;
+      const halfTick = isSectorDivider ? 0.9 : 0.38;
       const x = Math.cos(rad) * radius;
       const z = Math.sin(rad) * radius;
       tickPositions.push(new THREE.Vector3(x, -halfTick, z));
@@ -198,7 +205,11 @@ export default function SpaceDome() {
     const ticks = new THREE.BufferGeometry().setFromPoints(tickPositions);
 
     return {
-      eclipticRing,
+      equatorRing,
+      upperParallel,
+      lowerParallel,
+      meridianXY,
+      meridianYZ,
       ticks,
     };
   }, []);
@@ -227,7 +238,7 @@ export default function SpaceDome() {
     <group>
       {/* Seamless procedural deep-space & Milky Way dome */}
       <mesh renderOrder={-2}>
-        <sphereGeometry args={[130, 64, 48]} />
+        <sphereGeometry args={[145, 64, 48]} />
         <shaderMaterial
           vertexShader={SKY_VERTEX_SHADER}
           fragmentShader={SKY_FRAGMENT_SHADER}
@@ -250,13 +261,25 @@ export default function SpaceDome() {
         />
       </points>
 
-      {/* Calm ecliptic zodiac path ring tilted by Earth's 23.44 deg axial obliquity */}
-      <group rotation={[ECLIPTIC_OBLIQUITY_RAD, 0, 0]}>
-        <lineLoop geometry={armillaryGeometries.eclipticRing}>
-          <lineBasicMaterial color="#7cdee4" transparent opacity={0.09} depthWrite={false} />
+      {/* Subtle 3D celestial dome parallels & meridians framing upper, equatorial, and lower skies */}
+      <group>
+        <lineLoop geometry={armillaryGeometries.equatorRing}>
+          <lineBasicMaterial color="#7cdee4" transparent opacity={0.07} depthWrite={false} />
+        </lineLoop>
+        <lineLoop geometry={armillaryGeometries.upperParallel}>
+          <lineBasicMaterial color="#7cdee4" transparent opacity={0.045} depthWrite={false} />
+        </lineLoop>
+        <lineLoop geometry={armillaryGeometries.lowerParallel}>
+          <lineBasicMaterial color="#7cdee4" transparent opacity={0.045} depthWrite={false} />
+        </lineLoop>
+        <lineLoop geometry={armillaryGeometries.meridianXY}>
+          <lineBasicMaterial color="#7cdee4" transparent opacity={0.03} depthWrite={false} />
+        </lineLoop>
+        <lineLoop geometry={armillaryGeometries.meridianYZ}>
+          <lineBasicMaterial color="#7cdee4" transparent opacity={0.03} depthWrite={false} />
         </lineLoop>
         <lineSegments geometry={armillaryGeometries.ticks}>
-          <lineBasicMaterial color="#7cdee4" transparent opacity={0.12} depthWrite={false} />
+          <lineBasicMaterial color="#7cdee4" transparent opacity={0.1} depthWrite={false} />
         </lineSegments>
       </group>
     </group>

@@ -26,6 +26,15 @@ export interface ErgonomicSpacingOptions {
   maxIterations?: number;
 }
 
+export interface DomeWaveOptions {
+  sphereRadius?: number;
+  waveElevationDeg?: number;
+  minIntraDistance?: number;
+  minConstellationSpan?: number;
+  maxConstellationSpan?: number;
+  maxIterations?: number;
+}
+
 export interface ErgonomicConstellationInput {
   id: string;
   center: Vec3;
@@ -240,6 +249,164 @@ function crossVec3(a: Vec3, b: Vec3): Vec3 {
 
 function dotVec3(a: Vec3, b: Vec3): number {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+function buildTangentBasis(forwardInput: Vec3): {
+  forward: Vec3;
+  right: Vec3;
+  up: Vec3;
+} {
+  const forward = normalizeVec3(forwardInput);
+  let right = crossVec3(forward, [0, 1, 0]);
+  if (Math.hypot(right[0], right[1], right[2]) < 1e-4) {
+    right = [1, 0, 0];
+  } else {
+    right = normalizeVec3(right);
+  }
+  const up = normalizeVec3(crossVec3(right, forward));
+  return { forward, right, up };
+}
+
+/**
+ * Arranges all 12 constellations into a full 360-degree 3D dome wave across
+ * upper (+waveElevationDeg), equatorial (0 deg), and lower (-waveElevationDeg)
+ * latitudes in chronological order. Each constellation keeps its authentic
+ * star silhouette while gaining >50 deg center separation and generous
+ * intra-constellation hover spacing.
+ */
+export function computeDomeConstellations<T extends ErgonomicConstellationInput>(
+  constellations: T[],
+  options: DomeWaveOptions = {}
+): T[] {
+  const sphereRadius = options.sphereRadius ?? 52;
+  const waveElevationDeg = options.waveElevationDeg ?? 46;
+  const minIntra = options.minIntraDistance ?? 4.8;
+  const minSpan = options.minConstellationSpan ?? 13.5;
+  const maxSpan = options.maxConstellationSpan ?? 21.0;
+  const maxIterations = options.maxIterations ?? 80;
+  const count = constellations.length;
+
+  return constellations.map((c, idx) => {
+    // 1. Extract authentic silhouette in the constellation's original tangent plane
+    const origBasis = buildTangentBasis(c.center);
+    const [cx, cy, cz] = c.center;
+
+    const uvPoints = c.nodes.map((node) => {
+      const delta: Vec3 = [node[0] - cx, node[1] - cy, node[2] - cz];
+      return {
+        u: dotVec3(delta, origBasis.right),
+        v: dotVec3(delta, origBasis.up),
+      };
+    });
+
+    const minU = Math.min(...uvPoints.map((p) => p.u));
+    const maxU = Math.max(...uvPoints.map((p) => p.u));
+    const minV = Math.min(...uvPoints.map((p) => p.v));
+    const maxV = Math.max(...uvPoints.map((p) => p.v));
+
+    const midU = (minU + maxU) / 2;
+    const midV = (minV + maxV) / 2;
+    const rawSpan = Math.max(maxU - minU, maxV - minV, 1e-3);
+
+    // Uniform scale keeps natural constellation proportions while fitting dome sectors
+    let uniformScale = 1;
+    if (rawSpan > maxSpan) {
+      uniformScale = maxSpan / rawSpan;
+    } else if (rawSpan < minSpan) {
+      uniformScale = minSpan / rawSpan;
+    }
+
+    const working = uvPoints.map((p) => ({
+      u: (p.u - midU) * uniformScale,
+      v: (p.v - midV) * uniformScale,
+    }));
+    const anchors = working.map((p) => ({ u: p.u, v: p.v }));
+
+    // 2. Relax tightly clustered intra-constellation pairs in tangent space
+    const target2DMin = minIntra * 1.06;
+    for (let iter = 0; iter < maxIterations; iter++) {
+      let maxViolation = 0;
+      const du = new Array<number>(working.length).fill(0);
+      const dv = new Array<number>(working.length).fill(0);
+
+      for (let i = 0; i < working.length; i++) {
+        for (let j = i + 1; j < working.length; j++) {
+          const dx = working[j].u - working[i].u;
+          const dy = working[j].v - working[i].v;
+          const dist = Math.hypot(dx, dy) || 1e-4;
+          if (dist < target2DMin) {
+            const overlap = target2DMin - dist;
+            if (overlap > maxViolation) maxViolation = overlap;
+            const push = (overlap * 0.55) / dist;
+            du[i] -= dx * push;
+            dv[i] -= dy * push;
+            du[j] += dx * push;
+            dv[j] += dy * push;
+          }
+        }
+      }
+
+      const anchorPull = iter < maxIterations * 0.45 ? 0.04 : 0;
+      for (let i = 0; i < working.length; i++) {
+        working[i].u += du[i] + (anchors[i].u - working[i].u) * anchorPull;
+        working[i].v += dv[i] + (anchors[i].v - working[i].v) * anchorPull;
+      }
+
+      if (maxViolation < 0.01 && anchorPull === 0) break;
+    }
+
+    // Re-center after relaxation so constellation stays anchored on its wave target
+    const meanU = working.reduce((s, p) => s + p.u, 0) / Math.max(working.length, 1);
+    const meanV = working.reduce((s, p) => s + p.v, 0) / Math.max(working.length, 1);
+    for (const p of working) {
+      p.u -= meanU;
+      p.v -= meanV;
+    }
+
+    // 3. Place on Pattern 2 continuous 3D dome wave (+elev, 0, -elev, 0 repeating 3x)
+    const azimuth = (idx / count) * Math.PI * 2;
+    const waveFactor = Math.round(Math.cos((idx * Math.PI) / 2));
+    const elevRad = (waveFactor * waveElevationDeg * Math.PI) / 180;
+    const targetForward: Vec3 = [
+      Math.cos(elevRad) * Math.cos(azimuth),
+      Math.sin(elevRad),
+      Math.cos(elevRad) * Math.sin(azimuth),
+    ];
+    const targetBasis = buildTangentBasis(targetForward);
+
+    const nodes: Vec3[] = working.map((p) => {
+      const raw: Vec3 = [
+        targetBasis.forward[0] * sphereRadius +
+          targetBasis.right[0] * p.u +
+          targetBasis.up[0] * p.v,
+        targetBasis.forward[1] * sphereRadius +
+          targetBasis.right[1] * p.u +
+          targetBasis.up[1] * p.v,
+        targetBasis.forward[2] * sphereRadius +
+          targetBasis.right[2] * p.u +
+          targetBasis.up[2] * p.v,
+      ];
+      const onSphere = projectToSphere(raw, sphereRadius);
+      return [
+        Number(onSphere[0].toFixed(2)),
+        Number(onSphere[1].toFixed(2)),
+        Number(onSphere[2].toFixed(2)),
+      ];
+    });
+
+    const centerOnSphere = projectToSphere(targetBasis.forward, sphereRadius);
+    const center: Vec3 = [
+      Number(centerOnSphere[0].toFixed(2)),
+      Number(centerOnSphere[1].toFixed(2)),
+      Number(centerOnSphere[2].toFixed(2)),
+    ];
+
+    return {
+      ...c,
+      center,
+      nodes,
+    };
+  });
 }
 
 /**
