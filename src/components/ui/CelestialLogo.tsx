@@ -6,12 +6,12 @@ interface CelestialLogoProps {
 }
 
 /**
- * CelestialLogo - Bespoke astronomical emblem for Twelve Skies.
- * Inspired by astronomical armillary spheres and celestial coordinates.
- * Pure vector geometry; rejects generic AI sparkle iconography.
+ * CelestialLogo - Twelve Skies monogram mark.
+ * Uses exact Titillium Web Bold vector outlines for "12" with a warm amber zenith star accent,
+ * matching the browser favicon across header, navbar, auth, and modal surfaces.
  */
 export default function CelestialLogo({
-  className = "text-cyan-glow",
+  className = "",
   size = 24,
 }: CelestialLogoProps) {
   return (
@@ -24,47 +24,15 @@ export default function CelestialLogo({
       className={className}
       aria-label="Twelve Skies Emblem"
     >
-      {/* Outer celestial coordinate meridian ring */}
-      <circle
-        cx="12"
-        cy="12"
-        r="9.5"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeOpacity="0.4"
+      <path
+        d="M8.48 6.07V21H5.36V9.6L2.13 11.68L0.7 9.35L5.63 6.07Z"
+        fill="#f8fafc"
       />
-
-      {/* Tilted celestial equator ellipse */}
-      <ellipse
-        cx="12"
-        cy="12"
-        rx="9.5"
-        ry="3.8"
-        transform="rotate(-25 12 12)"
-        stroke="currentColor"
-        strokeWidth="1.4"
+      <path
+        d="M20.7 21H11.02V18.35L14.21 15.12Q15.9 13.38 16.57 12.45Q17.24 11.52 17.24 10.47Q17.24 9.42 16.68 8.99Q16.13 8.56 15.11 8.56Q13.6 8.56 11.81 8.83L11.27 8.9L11.11 6.48Q13.32 5.8 15.7 5.8Q20.45 5.8 20.45 10.08Q20.45 11.75 19.72 12.97Q19 14.19 17.1 15.93L14.5 18.29H20.7Z"
+        fill="#f8fafc"
       />
-
-      {/* Polar axis */}
-      <line
-        x1="12"
-        y1="1.5"
-        x2="12"
-        y2="22.5"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        strokeOpacity="0.5"
-      />
-
-      {/* Central zenith coordinate intersection */}
-      <circle cx="12" cy="12" r="1.8" fill="currentColor" />
-
-      {/* 4 cardinal celestial coordinate ticks */}
-      <line x1="2.5" y1="12" x2="4.5" y2="12" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="19.5" y1="12" x2="21.5" y2="12" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="12" y1="2.5" x2="12" y2="4.5" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="12" y1="19.5" x2="12" y2="21.5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="21.5" cy="3.6" r="1.75" fill="#fec42d" />
     </svg>
   );
 }
