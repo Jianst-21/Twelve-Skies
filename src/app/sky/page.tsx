@@ -36,6 +36,22 @@ export default function SkyPage() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [uploadInitialDate, setUploadInitialDate] = useState<Date | undefined>(undefined);
   const [resetCameraTrigger, setResetCameraTrigger] = useState(0);
+  const [showVerifiedToast, setShowVerifiedToast] = useState(false);
+
+  // Check if redirected after successful email confirmation
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("verified") === "true") {
+        setShowVerifiedToast(true);
+        // Clean URL parameter without reloading
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, "", cleanUrl);
+        const timer = setTimeout(() => setShowVerifiedToast(false), 8000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
 
   // Fetch memories from server
   const fetchMemories = useCallback(async () => {
@@ -140,6 +156,32 @@ export default function SkyPage() {
           setResetCameraTrigger((prev) => prev + 1);
         }}
       />
+
+      {/* Email Verification Success Toast */}
+      {showVerifiedToast && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 max-w-md w-[92%] sm:w-auto px-5 py-3.5 rounded-2xl bg-space-navy/95 border border-cyan-glow/50 text-white shadow-[0_0_30px_rgba(124,222,228,0.35)] backdrop-blur-xl flex items-center justify-between gap-4 transition-all animate-bounce-once">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-cyan-glow/20 border border-cyan-glow flex items-center justify-center text-cyan-glow text-sm shrink-0">
+              ✨
+            </div>
+            <div>
+              <p className="text-xs font-bold text-cyan-glow uppercase tracking-wider">
+                Akun Terverifikasi
+              </p>
+              <p className="text-xs text-nebula-silver">
+                Selamat datang! Kubah langit kenangan Anda telah aktif.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowVerifiedToast(false)}
+            aria-label="Tutup notifikasi"
+            className="text-nebula-silver hover:text-white text-xs px-1 py-0.5 rounded transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* 3D Canvas Area (Full Screen or Left 55% when Split View is Active) */}
       <div

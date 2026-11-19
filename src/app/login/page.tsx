@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -18,6 +18,22 @@ export default function LoginPage() {
 
   const supabase = createClient();
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const err = params.get("error");
+      const ver = params.get("verified");
+      if (err) {
+        setErrorMessage(err);
+      }
+      if (ver === "true") {
+        setSuccessMessage(
+          "Email Anda berhasil diverifikasi! Silakan masuk ke dalam kubah langit Anda."
+        );
+      }
+    }
+  }, []);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -26,16 +42,25 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
+        const origin =
+          typeof window !== "undefined"
+            ? window.location.origin
+            : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const emailRedirectTo = `${origin}/auth/callback`;
+
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo,
+          },
         });
 
         if (error) {
           setErrorMessage(error.message);
         } else {
           setSuccessMessage(
-            "Pendaftaran berhasil! Silakan periksa email Anda untuk verifikasi atau silakan masuk."
+            "Pendaftaran berhasil! Tautan konfirmasi telah dikirim ke email Anda. Silakan periksa kotak masuk atau spam untuk mengaktifkan akun."
           );
         }
       } else {
