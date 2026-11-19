@@ -10,8 +10,8 @@
       <stop offset="100%" stop-color="#d8f4f7" />
     </linearGradient>
     <radialGradient id="star-halo" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#fec42d" stop-opacity="0.55" />
-      <stop offset="55%" stop-color="#fec42d" stop-opacity="0.16" />
+      <stop offset="0%" stop-color="#fec42d" stop-opacity="0.45" />
+      <stop offset="60%" stop-color="#fec42d" stop-opacity="0.12" />
       <stop offset="100%" stop-color="#fec42d" stop-opacity="0" />
     </radialGradient>
   </defs>
@@ -22,6 +22,6 @@
   <path d="M25.15 18.69V48.65H18.89V25.77L12.4 29.95L9.54 25.28L19.43 18.69Z" fill="url(#numeral-fill)" />
   <path d="M49.66 48.65H30.24V43.34L36.63 36.85Q40.04 33.35 41.38 31.49Q42.72 29.63 42.72 27.52Q42.72 25.41 41.6 24.55Q40.49 23.69 38.45 23.69Q35.41 23.69 31.82 24.23L30.73 24.37L30.42 19.51Q34.86 18.15 39.63 18.15Q49.16 18.15 49.16 26.73Q49.16 30.09 47.71 32.54Q46.26 34.99 42.44 38.48L37.22 43.2H49.66Z" fill="url(#numeral-fill)" />
 
-  <circle cx="51" cy="13.5" r="8" fill="url(#star-halo)" />
-  <circle cx="51" cy="13.5" r="3.1" fill="#fec42d" />
+  <circle cx="50.5" cy="13.5" r="8.5" fill="url(#star-halo)" />
+  <path d="M50.5 6.9L51.16 11.91L53.33 10.67L52.09 12.84L57.1 13.5L52.09 14.16L53.33 16.33L51.16 15.09L50.5 20.1L49.84 15.09L47.67 16.33L48.91 14.16L43.9 13.5L48.91 12.84L47.67 10.67L49.84 11.91Z" fill="#fec42d" />
 </svg>
