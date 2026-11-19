@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ILLUSTRATIVE_MEMORIES } from "@/data/illustrativeMemories";
+import SectionStarfield from "@/components/landing/SectionStarfield";
 
 export default function ArchivePlatesSection() {
   const featuredPlate = ILLUSTRATIVE_MEMORIES[3]; // Mount Bromo
@@ -11,8 +12,9 @@ export default function ArchivePlatesSection() {
   ];
 
   return (
-    <section id="archive" className="relative z-10 py-16 sm:py-24">
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 space-y-20">
+    <section id="archive" className="relative py-16 sm:py-24">
+      <SectionStarfield variant="nebula-down" />
+      <div className="relative z-20 max-w-7xl mx-auto px-5 sm:px-8 space-y-20">
         {/* Illustrative Archive Plates */}
         <div>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">

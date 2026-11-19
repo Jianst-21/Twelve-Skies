@@ -1,10 +1,12 @@
 import Link from "next/link";
 import CelestialLogo from "@/components/ui/CelestialLogo";
+import SectionStarfield from "@/components/landing/SectionStarfield";
 
 export default function LandingFooter() {
   return (
-    <footer className="relative z-10 border-t border-white/10 bg-black/80">
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-12">
+    <footer className="relative border-t border-white/10">
+      <SectionStarfield variant="nebula-up" />
+      <div className="relative z-20 max-w-7xl mx-auto px-5 sm:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 pb-8 border-b border-white/10">
           <div className="md:col-span-6">
             <div className="flex items-center gap-3 mb-3">

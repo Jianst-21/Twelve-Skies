@@ -6,6 +6,7 @@ import { CONSTELLATIONS } from "@/data/constellations";
 import { projectConstellation2D } from "@/lib/constellationProjection";
 import { getConstellationBuckets } from "@/lib/dateDistributor";
 import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
+import SectionStarfield from "@/components/landing/SectionStarfield";
 
 export default function ConstellationLedger() {
   const [activeId, setActiveId] = useState<string>("capricorn");
@@ -25,9 +26,10 @@ export default function ConstellationLedger() {
   return (
     <section
       id="constellations"
-      className="relative z-10 border-b border-white/10 py-16 sm:py-24"
+      className="relative border-b border-white/10 py-16 sm:py-24"
     >
-      <div className="max-w-7xl mx-auto px-5 sm:px-8">
+      <SectionStarfield variant="nebula-up" />
+      <div className="relative z-20 max-w-7xl mx-auto px-5 sm:px-8">
         <div className="max-w-2xl mb-10">
           <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-ink-primary mb-3">
             The Twelve Astronomical Houses

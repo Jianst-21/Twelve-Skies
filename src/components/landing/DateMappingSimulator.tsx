@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { getConstellationAndNode, getConstellationBuckets } from "@/lib/dateDistributor";
 import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
+import SectionStarfield from "@/components/landing/SectionStarfield";
 
 const PRESET_DATES = [
   { label: "Jan 08 · Arctic Fjord", date: "2025-01-08" },
@@ -30,9 +31,10 @@ export default function DateMappingSimulator() {
   return (
     <section
       id="date-engine"
-      className="relative z-10 border-b border-white/10 py-16 sm:py-24"
+      className="relative border-b border-white/10 py-16 sm:py-24"
     >
-      <div className="max-w-7xl mx-auto px-5 sm:px-8">
+      <SectionStarfield variant="nebula-down" />
+      <div className="relative z-20 max-w-7xl mx-auto px-5 sm:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
           {/* Left: Explanation & Live Date Picker */}
           <div className="lg:col-span-5">

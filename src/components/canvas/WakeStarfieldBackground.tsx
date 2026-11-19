@@ -20,13 +20,26 @@ interface AmbientStar {
   excitement: number;
 }
 
+interface WakeStarfieldBackgroundProps {
+  /**
+   * "full" renders the fixed backdrop textures + canvas (used on /login).
+   * "scroll-wake" renders only the transparent interactive canvas and shifts
+   * particles with window.scrollY so it stays synchronized with scrolling
+   * per-section starfields on the landing page.
+   */
+  mode?: "full" | "scroll-wake";
+}
+
 /**
  * WakeStarfieldBackground - Combines the authentic Neowise deep-space starfield
  * textures (#000000 -> #03045E abyss) with a 60fps pointer-reactive bioluminescent
  * particle wake canvas that illuminates nearby stars on movement.
  */
-export default function WakeStarfieldBackground() {
+export default function WakeStarfieldBackground({
+  mode = "full",
+}: WakeStarfieldBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isScrollWake = mode === "scroll-wake";
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -105,7 +118,24 @@ export default function WakeStarfieldBackground() {
       pointerActive = true;
     };
 
+    let lastScrollY = window.scrollY;
+    const syncScrollDelta = () => {
+      if (!isScrollWake) return;
+      const currentScrollY = window.scrollY;
+      const deltaY = currentScrollY - lastScrollY;
+      if (deltaY === 0) return;
+      lastScrollY = currentScrollY;
+
+      for (const star of stars) {
+        star.y = (((star.y - deltaY) % height) + height) % height;
+      }
+      for (const p of wakes) {
+        p.y -= deltaY;
+      }
+    };
+
     const drawStatic = () => {
+      syncScrollDelta();
       ctx.clearRect(0, 0, width, height);
       for (const star of stars) {
         ctx.fillStyle = `rgba(226, 244, 255, ${star.baseAlpha})`;
@@ -117,12 +147,22 @@ export default function WakeStarfieldBackground() {
 
     if (prefersReducedMotion) {
       drawStatic();
+      const handleStaticScroll = () => drawStatic();
+      if (isScrollWake) {
+        window.addEventListener("scroll", handleStaticScroll, { passive: true });
+      }
       window.addEventListener("resize", resize);
-      return () => window.removeEventListener("resize", resize);
+      return () => {
+        if (isScrollWake) {
+          window.removeEventListener("scroll", handleStaticScroll);
+        }
+        window.removeEventListener("resize", resize);
+      };
     }
 
     let frameId = 0;
     const render = () => {
+      syncScrollDelta();
       ctx.clearRect(0, 0, width, height);
 
       // Update & render ambient stars
@@ -184,7 +224,20 @@ export default function WakeStarfieldBackground() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("resize", resize);
     };
-  }, []);
+  }, [isScrollWake]);
+
+  if (isScrollWake) {
+    return (
+      <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden">
+        {/* Interactive 60fps Bioluminescent Wake Canvas (scroll-synced over per-section starfields) */}
+        <canvas
+          ref={canvasRef}
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-space-black">

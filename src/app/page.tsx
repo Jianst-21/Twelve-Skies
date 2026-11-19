@@ -9,7 +9,7 @@ import LandingFooter from "@/components/landing/LandingFooter";
 export default function LandingPage() {
   return (
     <div className="relative min-h-screen bg-space-black text-ink-primary">
-      <WakeStarfieldBackground />
+      <WakeStarfieldBackground mode="scroll-wake" />
       <LandingHeader />
       <main>
         <HeroObservatory />

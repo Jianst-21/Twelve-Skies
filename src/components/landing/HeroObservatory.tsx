@@ -8,6 +8,7 @@ import { ILLUSTRATIVE_MEMORIES } from "@/data/illustrativeMemories";
 import { projectConstellation2D } from "@/lib/constellationProjection";
 import { getConstellationBuckets } from "@/lib/dateDistributor";
 import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
+import SectionStarfield from "@/components/landing/SectionStarfield";
 
 export default function HeroObservatory() {
   // Default to Leo and the exact computed node for the Mount Bromo illustrative entry
@@ -50,9 +51,10 @@ export default function HeroObservatory() {
   return (
     <section
       id="observatory"
-      className="relative z-10 border-b border-white/10"
+      className="relative border-b border-white/10"
     >
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-10 pb-8 lg:pt-14 lg:pb-10">
+      <SectionStarfield variant="hero" />
+      <div className="relative z-20 max-w-7xl mx-auto px-5 sm:px-8 pt-10 pb-8 lg:pt-14 lg:pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
           {/* Left Column: Opening Thesis & Actions */}
           <div className="lg:col-span-5">

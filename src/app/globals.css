@@ -42,6 +42,25 @@ body {
   scroll-behavior: smooth;
 }
 
+/* Per-section scrolling cosmic nebula grounds (matches Neowise 167deg / 185deg cadence) */
+.bg-neowise-nebula-down {
+  background-color: var(--color-space-black);
+  background-image: linear-gradient(
+    167deg,
+    var(--color-space-black) 30%,
+    var(--color-space-navy) 61%
+  );
+}
+
+.bg-neowise-nebula-up {
+  background-color: var(--color-space-black);
+  background-image: linear-gradient(
+    185deg,
+    var(--color-space-navy) 30%,
+    var(--color-space-black) 71%
+  );
+}
+
 /* Native interactive affordances and instant focus ring */
 a[href],
 button:not(:disabled),
