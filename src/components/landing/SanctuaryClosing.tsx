@@ -8,7 +8,7 @@ export default function SanctuaryClosing() {
       className="relative z-10 pointer-events-none py-16 sm:py-24"
     >
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
-        <div className="max-w-2xl pointer-events-auto rounded-xl border border-white/12 bg-space-black/90 p-7 sm:p-10">
+        <div className="max-w-2xl pointer-events-auto rounded-xl border border-white/12 bg-space-black/90 p-6 sm:p-10">
           <h2
             id="sanctuary-heading"
             className="font-display text-3xl sm:text-4xl font-bold tracking-[-0.02em] text-ink-primary leading-tight mb-4"
@@ -21,16 +21,16 @@ export default function SanctuaryClosing() {
             a quiet 3D sky vault visible only to you.
           </p>
 
-          <div className="flex flex-wrap items-center gap-3.5">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
             <Link
               href="/login"
-              className="min-h-[44px] px-6 inline-flex items-center justify-center rounded-lg bg-cyan-glow text-space-navy font-bold text-sm hover:bg-ink-primary transition-colors"
+              className="w-full sm:w-auto min-h-[44px] px-6 inline-flex items-center justify-center rounded-lg bg-cyan-glow text-space-navy font-bold text-sm hover:bg-ink-primary transition-colors"
             >
               Create Free Account
             </Link>
             <Link
               href="/sky"
-              className="min-h-[44px] px-6 inline-flex items-center justify-center rounded-lg border border-white/25 text-ink-primary font-medium text-sm hover:border-cyan-glow hover:bg-white/[0.06] transition-colors"
+              className="w-full sm:w-auto min-h-[44px] px-6 inline-flex items-center justify-center rounded-lg border border-white/25 text-ink-primary font-medium text-sm hover:border-cyan-glow hover:bg-white/[0.06] transition-colors"
             >
               Open 3D Sky
             </Link>

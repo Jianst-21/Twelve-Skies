@@ -88,17 +88,17 @@ export default function HeroSkySection({
               constellation star inside a private 360-degree 3D night sky.
             </p>
 
-            <div className="flex flex-wrap items-center gap-3.5 mb-9">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center gap-3 mb-9">
               <Link
                 id="hero-primary-cta"
                 href="/sky"
-                className="min-h-[44px] px-6 inline-flex items-center justify-center rounded-lg bg-cyan-glow text-space-navy font-bold text-sm hover:bg-ink-primary active:scale-[0.99] transition-colors"
+                className="min-h-[44px] px-4 sm:px-6 inline-flex items-center justify-center rounded-lg bg-cyan-glow text-space-navy font-bold text-sm whitespace-nowrap hover:bg-ink-primary active:scale-[0.99] transition-colors"
               >
                 Open 3D Sky
               </Link>
               <Link
                 href="/login"
-                className="min-h-[44px] px-6 inline-flex items-center justify-center rounded-lg border border-white/25 bg-space-black/60 text-ink-primary font-medium text-sm hover:border-cyan-glow hover:bg-white/[0.06] active:scale-[0.99] transition-colors"
+                className="min-h-[44px] px-4 sm:px-6 inline-flex items-center justify-center rounded-lg border border-white/25 bg-space-black/60 text-ink-primary font-medium text-sm whitespace-nowrap hover:border-cyan-glow hover:bg-white/[0.06] active:scale-[0.99] transition-colors"
               >
                 Sign In
               </Link>
