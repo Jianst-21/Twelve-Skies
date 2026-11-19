@@ -1,14 +1,19 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html, Line } from "@react-three/drei";
+import type { Line2, LineSegments2 } from "three-stdlib";
 import * as THREE from "three";
 import { ConstellationData, MemoryItem } from "@/types";
 import { getNodeDateRange } from "@/lib/dateDistributor";
 import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
 import StarNode from "./StarNode";
-import { computeConstellationLabelPosition } from "./celestialMath";
+import {
+  computeConstellationLabelPosition,
+  computeSegmentHitbox,
+  getHighlightedLineIndices,
+} from "./celestialMath";
 
 interface ConstellationProps {
   constellation: ConstellationData;
@@ -20,6 +25,7 @@ interface ConstellationProps {
 }
 
 const FORWARD_AXIS = new THREE.Vector3(0, 0, -1);
+const CYLINDER_UP = new THREE.Vector3(0, 1, 0);
 
 export default function Constellation({
   constellation,
@@ -30,14 +36,30 @@ export default function Constellation({
   onSelectNode,
 }: ConstellationProps) {
   const [isLabelHovered, setIsLabelHovered] = useState(false);
-  const [hoveredNodeCount, setHoveredNodeCount] = useState(0);
+  const [hoveredNodeIndex, setHoveredNodeIndex] = useState<number | null>(null);
+  const [hoveredLineIndex, setHoveredLineIndex] = useState<number | null>(null);
   const [isInFront, setIsInFront] = useState(true);
 
   const camForwardRef = useRef(new THREE.Vector3());
   const inFrontRef = useRef(true);
+  const baseLineRef = useRef<Line2 | LineSegments2 | null>(null);
+  const glowLineRef = useRef<Line2 | LineSegments2 | null>(null);
+  const baseOpacityRef = useRef(isSelected ? 0.88 : 0.3);
+  const glowOpacityRef = useRef(isSelected ? 0.2 : 0);
+  const reducedMotionRef = useRef(false);
 
-  const isHovered = isLabelHovered || hoveredNodeCount > 0;
+  const isHovered =
+    isLabelHovered || hoveredNodeIndex !== null || hoveredLineIndex !== null;
   const isActive = isSelected || isHovered;
+
+  useEffect(() => {
+    reducedMotionRef.current = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    return () => {
+      document.body.style.cursor = "auto";
+    };
+  }, []);
 
   const totalConstellationMemories = useMemo(
     () =>
@@ -58,6 +80,56 @@ export default function Constellation({
     return pts;
   }, [constellation]);
 
+  // Invisible trimmed raycast cylinders along each filament for effortless line hover
+  const segmentHitboxes = useMemo(() => {
+    return constellation.lines
+      .map(([fromIdx, toIdx], lineIdx) => {
+        const fromPos = constellation.nodes[fromIdx];
+        const toPos = constellation.nodes[toIdx];
+        if (!fromPos || !toPos) return null;
+
+        const hitbox = computeSegmentHitbox(fromPos, toPos, 1.15);
+        if (!hitbox) return null;
+
+        const dir = new THREE.Vector3(...hitbox.direction);
+        const quat = new THREE.Quaternion().setFromUnitVectors(CYLINDER_UP, dir);
+        return {
+          lineIdx,
+          midpoint: hitbox.midpoint,
+          length: hitbox.length,
+          quaternion: quat,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+  }, [constellation]);
+
+  // Extra luminous highlight points for the hovered line segment or hovered star's edges
+  const highlightedLinePoints = useMemo(() => {
+    const indices = getHighlightedLineIndices(
+      constellation.lines,
+      hoveredLineIndex,
+      hoveredNodeIndex
+    );
+    const pts: [number, number, number][] = [];
+    for (const idx of indices) {
+      const pair = constellation.lines[idx];
+      if (!pair) continue;
+      const fromPos = constellation.nodes[pair[0]];
+      const toPos = constellation.nodes[pair[1]];
+      if (fromPos && toPos) {
+        pts.push(fromPos, toPos);
+      }
+    }
+    return pts;
+  }, [constellation, hoveredLineIndex, hoveredNodeIndex]);
+
+  // Bright starlight tint mixed with constellation color for highlighted filaments
+  const highlightCoreColor = useMemo(() => {
+    const c = new THREE.Color(constellation.glowColor);
+    c.lerp(new THREE.Color("#ffffff"), 0.55);
+    return `#${c.getHexString()}`;
+  }, [constellation.glowColor]);
+
   const labelPosition = useMemo(
     () => computeConstellationLabelPosition(constellation, 2.7),
     [constellation]
@@ -68,8 +140,8 @@ export default function Constellation({
     [constellation.center]
   );
 
-  // Hide HTML nameplates for constellations behind the camera to avoid edge artifacts
-  useFrame(({ camera }) => {
+  // Hide HTML nameplates behind the camera + smoothly warm/fade filament glow
+  useFrame(({ camera }, delta) => {
     camForwardRef.current.copy(FORWARD_AXIS).applyQuaternion(camera.quaternion);
     const dot = camForwardRef.current.dot(centerDir);
     const nextInFront = dot > 0.22;
@@ -77,9 +149,49 @@ export default function Constellation({
       inFrontRef.current = nextInFront;
       setIsInFront(nextInFront);
     }
+
+    const dt = Math.min(delta, 0.05);
+    const targetBaseOpacity = isSelected
+      ? isHovered
+        ? 0.98
+        : 0.86
+      : isHovered
+      ? 0.84
+      : 0.3;
+    const targetGlowOpacity = isSelected
+      ? isHovered
+        ? 0.34
+        : 0.2
+      : isHovered
+      ? 0.26
+      : 0;
+
+    if (reducedMotionRef.current) {
+      baseOpacityRef.current = targetBaseOpacity;
+      glowOpacityRef.current = targetGlowOpacity;
+    } else {
+      baseOpacityRef.current = THREE.MathUtils.damp(
+        baseOpacityRef.current,
+        targetBaseOpacity,
+        10,
+        dt
+      );
+      glowOpacityRef.current = THREE.MathUtils.damp(
+        glowOpacityRef.current,
+        targetGlowOpacity,
+        10,
+        dt
+      );
+    }
+
+    if (baseLineRef.current?.material) {
+      baseLineRef.current.material.opacity = baseOpacityRef.current;
+    }
+    if (glowLineRef.current?.material) {
+      glowLineRef.current.material.opacity = glowOpacityRef.current;
+    }
   });
 
-  const activeOpacity = isSelected ? 0.92 : isHovered ? 0.78 : 0.3;
   const activeColor = isActive ? constellation.glowColor : "#7c91b0";
 
   return (
@@ -87,29 +199,82 @@ export default function Constellation({
       {/* Crisp screen-space constellation filaments */}
       {linePoints.length > 0 && (
         <Line
+          ref={baseLineRef}
           points={linePoints}
           segments
           color={activeColor}
-          lineWidth={isSelected ? 2.1 : isHovered ? 1.7 : 1.0}
+          lineWidth={isSelected ? (isHovered ? 2.3 : 2.0) : isHovered ? 1.85 : 1.0}
           transparent
-          opacity={activeOpacity}
+          opacity={isSelected ? 0.86 : isHovered ? 0.84 : 0.3}
           depthWrite={false}
         />
       )}
 
-      {/* Subtle additive glow filament when constellation is focused or hovered */}
-      {isActive && linePoints.length > 0 && (
+      {/* Smooth additive glow filament across the constellation */}
+      {linePoints.length > 0 && (
         <Line
+          ref={glowLineRef}
           points={linePoints}
           segments
           color={constellation.glowColor}
-          lineWidth={5.2}
+          lineWidth={isHovered ? 6.4 : 5.0}
           transparent
-          opacity={isSelected ? 0.2 : 0.14}
+          opacity={isSelected ? 0.2 : 0}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
       )}
+
+      {/* Luminous highlight overlay for hovered line segment or hovered star's connected edges */}
+      {highlightedLinePoints.length > 0 && (
+        <group>
+          <Line
+            points={highlightedLinePoints}
+            segments
+            color={highlightCoreColor}
+            lineWidth={2.7}
+            transparent
+            opacity={0.98}
+            depthWrite={false}
+          />
+          <Line
+            points={highlightedLinePoints}
+            segments
+            color={constellation.glowColor}
+            lineWidth={8.8}
+            transparent
+            opacity={0.42}
+            depthWrite={false}
+            blending={THREE.AdditiveBlending}
+          />
+        </group>
+      )}
+
+      {/* Invisible trimmed raycast cylinders so hovering or clicking any line works effortlessly */}
+      {segmentHitboxes.map((seg) => (
+        <mesh
+          key={`${constellation.id}-seg-hit-${seg.lineIdx}`}
+          position={seg.midpoint}
+          quaternion={seg.quaternion}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            setHoveredLineIndex(seg.lineIdx);
+            document.body.style.cursor = "pointer";
+          }}
+          onPointerOut={(e) => {
+            e.stopPropagation();
+            setHoveredLineIndex((curr) => (curr === seg.lineIdx ? null : curr));
+            document.body.style.cursor = "auto";
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectConstellation(constellation);
+          }}
+        >
+          <cylinderGeometry args={[0.55, 0.55, seg.length, 6, 1, true]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+      ))}
 
       {/* Offset Astronomical Nameplate (positioned cleanly below lowest star) */}
       {isInFront && (
@@ -170,7 +335,9 @@ export default function Constellation({
             isSelected={isNodeSelected}
             isConstellationActive={isActive}
             onHoverChange={(hovered) => {
-              setHoveredNodeCount((c) => Math.max(0, c + (hovered ? 1 : -1)));
+              setHoveredNodeIndex((curr) =>
+                hovered ? idx : curr === idx ? null : curr
+              );
             }}
             onSelect={(nodeIdx) => {
               if (!isSelected) {

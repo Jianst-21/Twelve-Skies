@@ -4,7 +4,9 @@ import {
   celestialToCartesian,
   computeDomeConstellations,
   computeErgonomicConstellations,
+  computeSegmentHitbox,
   generateRealCatalogStarfield,
+  getHighlightedLineIndices,
 } from "../src/components/canvas/celestialMath.ts";
 import { BRIGHT_STARS } from "../src/data/brightStars.ts";
 import { CONSTELLATIONS } from "../src/data/constellations.ts";
@@ -222,4 +224,35 @@ test("computeDomeConstellations spreads all 12 constellations across upper, mid,
       }
     }
   }
+});
+
+test("getHighlightedLineIndices highlights connected edges on node hover and exact segment on line hover", () => {
+  const lines = [
+    [0, 1],
+    [1, 2],
+    [1, 3],
+    [3, 4],
+  ];
+
+  // Hovering star node 1 illuminates all three incident edges (0, 1, 2)
+  assert.deepEqual(getHighlightedLineIndices(lines, null, 1), [0, 1, 2]);
+  // Node hover takes precedence over line hover
+  assert.deepEqual(getHighlightedLineIndices(lines, 3, 1), [0, 1, 2]);
+  // Hovering directly on line segment 3 illuminates segment 3
+  assert.deepEqual(getHighlightedLineIndices(lines, 3, null), [3]);
+  // Neither hovered returns empty
+  assert.deepEqual(getHighlightedLineIndices(lines, null, null), []);
+  // Out-of-bounds line index safely returns empty
+  assert.deepEqual(getHighlightedLineIndices(lines, 99, null), []);
+});
+
+test("computeSegmentHitbox trims segment endpoints cleanly away from star node spheres", () => {
+  const hitbox = computeSegmentHitbox([0, 0, 0], [10, 0, 0], 1.15);
+  assert.ok(hitbox !== null);
+  assert.deepEqual(hitbox.midpoint, [5, 0, 0]);
+  assert.ok(Math.abs(hitbox.length - 7.7) < 1e-6);
+  assert.deepEqual(hitbox.direction, [1, 0, 0]);
+
+  // Too short to clear both star hitboxes returns null
+  assert.equal(computeSegmentHitbox([0, 0, 0], [2.0, 0, 0], 1.15), null);
 });

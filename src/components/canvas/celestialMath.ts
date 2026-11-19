@@ -646,3 +646,71 @@ export function generateRealCatalogStarfield(
 
   return { positions, colors, sizes, phases };
 }
+
+export interface SegmentHitbox {
+  midpoint: Vec3;
+  length: number;
+  direction: Vec3;
+}
+
+/**
+ * Returns indices of constellation line segments that should receive extra
+ * luminous highlight: all incident edges when a star node is hovered, or
+ * the hovered segment itself when hovering directly on a filament.
+ */
+export function getHighlightedLineIndices(
+  lines: [number, number][],
+  hoveredLineIndex: number | null,
+  hoveredNodeIndex: number | null
+): number[] {
+  if (hoveredNodeIndex !== null) {
+    const connected: number[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      const [from, to] = lines[i];
+      if (from === hoveredNodeIndex || to === hoveredNodeIndex) {
+        connected.push(i);
+      }
+    }
+    return connected;
+  }
+
+  if (
+    hoveredLineIndex !== null &&
+    hoveredLineIndex >= 0 &&
+    hoveredLineIndex < lines.length
+  ) {
+    return [hoveredLineIndex];
+  }
+
+  return [];
+}
+
+/**
+ * Computes a trimmed raycast cylinder midpoint, length, and unit direction
+ * along a constellation filament so hovering the line is effortless while
+ * endpoints stay clear of the StarNode raycast spheres.
+ */
+export function computeSegmentHitbox(
+  from: Vec3,
+  to: Vec3,
+  endpointTrim = 1.15
+): SegmentHitbox | null {
+  const dx = to[0] - from[0];
+  const dy = to[1] - from[1];
+  const dz = to[2] - from[2];
+  const segLen = Math.hypot(dx, dy, dz);
+  const length = segLen - endpointTrim * 2;
+  if (segLen < 1e-4 || length <= 0.15) {
+    return null;
+  }
+
+  return {
+    midpoint: [
+      (from[0] + to[0]) * 0.5,
+      (from[1] + to[1]) * 0.5,
+      (from[2] + to[2]) * 0.5,
+    ],
+    length,
+    direction: [dx / segLen, dy / segLen, dz / segLen],
+  };
+}
