@@ -7,9 +7,20 @@ export async function GET(request: NextRequest) {
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/sky?verified=true";
+  const errorDescription = searchParams.get("error_description");
+  const rawNext = searchParams.get("next");
+  const next =
+    rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//")
+      ? rawNext
+      : "/auth/verified";
 
   const origin = request.nextUrl.origin;
+
+  if (errorDescription) {
+    return NextResponse.redirect(
+      new URL(`/login?error=${encodeURIComponent(errorDescription)}`, origin)
+    );
+  }
 
   const supabase = await createClient();
 
@@ -21,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Handle OTP / token_hash verification
+  // Handle OTP / token_hash verification (works across browsers and devices)
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({
       type,

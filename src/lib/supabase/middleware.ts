@@ -26,6 +26,20 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
+  // Forward Supabase auth redirects that land on Site URL "/" instead of "/auth/callback"
+  if (request.nextUrl.pathname === "/") {
+    const params = request.nextUrl.searchParams;
+    const hasAuthCode = params.has("code");
+    const hasOtpToken = params.has("token_hash") && params.has("type");
+    const hasAuthError = params.has("error_description");
+
+    if (hasAuthCode || hasOtpToken || hasAuthError) {
+      const callbackUrl = request.nextUrl.clone();
+      callbackUrl.pathname = "/auth/callback";
+      return NextResponse.redirect(callbackUrl);
+    }
+  }
+
   const isProtectedPath =
     request.nextUrl.pathname.startsWith("/sky") ||
     request.nextUrl.pathname.startsWith("/api/memories");
