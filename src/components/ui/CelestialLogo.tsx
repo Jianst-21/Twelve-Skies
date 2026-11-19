@@ -7,7 +7,7 @@ interface CelestialLogoProps {
 
 /**
  * CelestialLogo - Twelve Skies monogram mark.
- * Uses exact Titillium Web Bold vector outlines for "12" with a straight-faceted
+ * Uses exact Titillium Web Bold vector outlines for "12" with a crisp straight-faceted
  * 8-point astronomical Polaris star, matching the browser favicon across the app.
  */
 export default function CelestialLogo({
@@ -25,15 +25,15 @@ export default function CelestialLogo({
       aria-label="Twelve Skies Emblem"
     >
       <path
-        d="M8.48 6.07V21H5.36V9.6L2.13 11.68L0.7 9.35L5.63 6.07Z"
+        d="M7.32 8.44V21.8H4.52V11.6L1.63 13.46L0.35 11.38L4.77 8.44Z"
         fill="#f8fafc"
       />
       <path
-        d="M20.7 21H11.02V18.35L14.21 15.12Q15.9 13.38 16.57 12.45Q17.24 11.52 17.24 10.47Q17.24 9.42 16.68 8.99Q16.13 8.56 15.11 8.56Q13.6 8.56 11.81 8.83L11.27 8.9L11.11 6.48Q13.32 5.8 15.7 5.8Q20.45 5.8 20.45 10.08Q20.45 11.75 19.72 12.97Q19 14.19 17.1 15.93L14.5 18.29H20.7Z"
+        d="M18.25 21.8H9.58V19.43L12.44 16.54Q13.95 14.98 14.55 14.15Q15.15 13.32 15.15 12.38Q15.15 11.44 14.65 11.05Q14.16 10.67 13.25 10.67Q11.89 10.67 10.29 10.91L9.81 10.97L9.66 8.81Q11.65 8.2 13.77 8.2Q18.02 8.2 18.02 12.03Q18.02 13.52 17.38 14.62Q16.73 15.71 15.03 17.27L12.7 19.37H18.25Z"
         fill="#f8fafc"
       />
       <path
-        d="M20.7 0.5L21.01 2.84L22.01 2.29L21.46 3.29L23.8 3.6L21.46 3.91L22.01 4.91L21.01 4.36L20.7 6.7L20.39 4.36L19.39 4.91L19.94 3.91L17.6 3.6L19.94 3.29L19.39 2.29L20.39 2.84Z"
+        d="M19 0.4L19.4 4.13L20.77 3.33L19.97 4.7L23.7 5.1L19.97 5.5L20.77 6.87L19.4 6.07L19 9.8L18.6 6.07L17.23 6.87L18.03 5.5L14.3 5.1L18.03 4.7L17.23 3.33L18.6 4.13Z"
         fill="#fec42d"
       />
     </svg>

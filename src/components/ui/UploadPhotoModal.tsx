@@ -200,7 +200,7 @@ export default function UploadPhotoModal({
         <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-cyan-glow/15 border border-cyan-glow/40 flex items-center justify-center text-cyan-glow">
-              <CelestialLogo size={18} />
+              <CelestialLogo size={23} />
             </div>
             <div>
               <h2

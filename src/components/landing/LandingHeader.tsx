@@ -36,7 +36,7 @@ export default function LandingHeader() {
       <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-3 group min-h-[44px]">
           <span className="w-9 h-9 rounded-lg border border-cyan-glow/30 bg-space-abyss flex items-center justify-center text-cyan-glow group-hover:border-cyan-glow transition-colors">
-            <CelestialLogo size={20} />
+            <CelestialLogo size={24} />
           </span>
           <span className="font-display text-base sm:text-lg font-bold tracking-[0.12em] uppercase text-ink-primary">
             Twelve Skies

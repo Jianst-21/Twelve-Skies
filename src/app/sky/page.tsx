@@ -273,7 +273,7 @@ export default function SkyPage() {
         >
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-cyan-glow/15 border border-cyan-glow/40 flex items-center justify-center text-cyan-glow shrink-0">
-              <CelestialLogo size={16} />
+              <CelestialLogo size={20} />
             </div>
             <div>
               <p className="text-xs font-bold text-cyan-glow uppercase tracking-wider">

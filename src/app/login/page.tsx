@@ -118,7 +118,7 @@ export default function LoginPage() {
         <div className="rounded-xl border border-cyan-glow/25 bg-space-abyss/85 backdrop-blur-md p-6 sm:p-8">
           <div className="flex flex-col items-center text-center mb-7">
             <div className="w-12 h-12 rounded-xl border border-cyan-glow/35 bg-black/60 flex items-center justify-center text-cyan-glow mb-3.5">
-              <CelestialLogo size={24} />
+              <CelestialLogo size={30} />
             </div>
             <h1 className="font-display text-2xl font-bold tracking-wide text-ink-primary">
               {isSignUp ? "Create Your Sky Vault" : "Sign In to Twelve Skies"}

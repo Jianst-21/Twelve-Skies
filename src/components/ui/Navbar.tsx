@@ -37,7 +37,7 @@ export default function Navbar({
       {/* Brand */}
       <Link href="/" className="flex items-center gap-3 group min-h-[44px]">
         <div className="w-9 h-9 rounded-lg border border-cyan-glow/30 bg-black/60 flex items-center justify-center text-cyan-glow group-hover:border-cyan-glow transition-colors">
-          <CelestialLogo size={20} />
+          <CelestialLogo size={24} />
         </div>
         <div className="hidden sm:block">
           <span className="font-display text-sm font-bold tracking-[0.14em] text-ink-primary uppercase block leading-tight">

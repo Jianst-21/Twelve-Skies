@@ -108,7 +108,7 @@ export default function EmailVerifiedPage() {
           className="rounded-xl border border-cyan-glow/25 bg-space-abyss/85 backdrop-blur-md p-6 sm:p-8 text-center"
         >
           <div className="w-12 h-12 rounded-xl border border-cyan-glow/35 bg-black/60 flex items-center justify-center text-cyan-glow mx-auto mb-5">
-            <CelestialLogo size={24} />
+            <CelestialLogo size={30} />
           </div>
 
           <div className="inline-flex items-center justify-center gap-2 text-emerald-300 mb-3">
