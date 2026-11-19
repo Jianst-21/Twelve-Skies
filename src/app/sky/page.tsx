@@ -277,13 +277,13 @@ export default function SkyPage() {
       {showVerifiedToast && (
         <div
           role="status"
-          className="fixed top-24 left-1/2 -translate-x-1/2 z-50 max-w-md w-[92%] sm:w-auto px-4 py-3 rounded-xl bg-space-abyss/95 border border-cyan-glow/45 text-ink-primary backdrop-blur-md flex items-center justify-between gap-4"
+          className="fixed top-[calc(max(0.75rem,env(safe-area-inset-top))+4.25rem)] sm:top-[calc(max(1rem,env(safe-area-inset-top))+4.75rem)] left-1/2 -translate-x-1/2 z-50 max-w-md w-[92%] sm:w-auto px-4 py-3 rounded-xl bg-space-abyss/95 border border-cyan-glow/45 text-ink-primary backdrop-blur-md flex items-center justify-between gap-3"
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-cyan-glow/15 border border-cyan-glow/40 flex items-center justify-center text-cyan-glow shrink-0">
               <CelestialLogo size={20} />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-bold text-cyan-glow uppercase tracking-wider">
                 Account Verified
               </p>
@@ -296,7 +296,7 @@ export default function SkyPage() {
             type="button"
             onClick={() => setShowVerifiedToast(false)}
             aria-label="Dismiss notification"
-            className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center rounded text-ink-secondary hover:text-ink-primary"
+            className="min-w-[44px] min-h-[44px] -mr-2 inline-flex items-center justify-center rounded-lg text-ink-secondary hover:text-ink-primary shrink-0"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -307,18 +307,18 @@ export default function SkyPage() {
       {memoriesError && (
         <div
           role="alert"
-          className="fixed top-24 left-1/2 -translate-x-1/2 z-40 max-w-md w-[92%] sm:w-auto px-4 py-3 rounded-xl bg-rose-950/90 border border-rose-500/45 text-rose-100 backdrop-blur-md flex items-center justify-between gap-3 text-xs"
+          className="fixed top-[calc(max(0.75rem,env(safe-area-inset-top))+4.25rem)] sm:top-[calc(max(1rem,env(safe-area-inset-top))+4.75rem)] left-1/2 -translate-x-1/2 z-40 max-w-md w-[92%] sm:w-auto px-4 py-3 rounded-xl bg-rose-950/90 border border-rose-500/45 text-rose-100 backdrop-blur-md flex items-center justify-between gap-3 text-xs"
         >
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
             <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" aria-hidden="true" />
             <span>{memoriesError}</span>
           </div>
           <button
             type="button"
             onClick={fetchMemories}
-            className="px-2.5 py-1.5 rounded-md bg-rose-500/25 border border-rose-400/40 text-white font-semibold hover:bg-rose-500/40 inline-flex items-center gap-1 shrink-0"
+            className="min-h-[44px] px-3 py-1.5 rounded-md bg-rose-500/25 border border-rose-400/40 text-white font-semibold hover:bg-rose-500/40 inline-flex items-center gap-1 shrink-0"
           >
-            <RefreshCw className="w-3 h-3" aria-hidden="true" />
+            <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Retry</span>
           </button>
         </div>
@@ -326,7 +326,7 @@ export default function SkyPage() {
 
       {/* First-Run Empty Vault Guidance */}
       {!isLoadingMemories && !memoriesError && memories.length === 0 && !isSplitView && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-30 max-w-md w-[92%] sm:w-auto px-4 py-3 rounded-xl bg-black/75 border border-white/15 backdrop-blur-md flex items-center justify-between gap-4 text-xs">
+        <div className="fixed top-[calc(max(0.75rem,env(safe-area-inset-top))+4.25rem)] sm:top-[calc(max(1rem,env(safe-area-inset-top))+4.75rem)] left-1/2 -translate-x-1/2 z-30 max-w-md w-[92%] sm:w-auto px-4 py-3 rounded-xl bg-black/75 border border-white/15 backdrop-blur-md flex items-center justify-between gap-3 text-xs">
           <div className="text-ink-secondary">
             Your sky is open. Drag to orbit or add your first photograph to ignite a star node.
           </div>
@@ -336,7 +336,7 @@ export default function SkyPage() {
               setUploadInitialDate(new Date());
               setIsUploadOpen(true);
             }}
-            className="px-3 py-1.5 rounded-lg bg-cyan-glow text-space-navy font-bold shrink-0 hover:bg-white inline-flex items-center gap-1"
+            className="min-h-[44px] px-3.5 py-1.5 rounded-lg bg-cyan-glow text-space-navy font-bold shrink-0 hover:bg-white inline-flex items-center gap-1 whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Add First</span>
@@ -348,9 +348,9 @@ export default function SkyPage() {
       {isIndexOpen && (
         <aside
           aria-label="Vault Memory Index"
-          className="fixed top-24 left-4 sm:left-8 z-40 w-[92vw] max-w-sm max-h-[65vh] rounded-xl bg-space-abyss/95 border border-cyan-glow/30 backdrop-blur-md flex flex-col overflow-hidden"
+          className="fixed top-[calc(max(0.75rem,env(safe-area-inset-top))+4.25rem)] sm:top-[calc(max(1rem,env(safe-area-inset-top))+4.75rem)] left-[max(0.75rem,env(safe-area-inset-left))] sm:left-8 z-40 w-[calc(100vw-1.5rem)] max-w-sm max-h-[calc(100dvh-11.5rem)] rounded-xl bg-space-abyss/95 border border-cyan-glow/30 backdrop-blur-md flex flex-col overflow-hidden"
         >
-          <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between gap-2">
             <div>
               <h2 className="font-display text-sm font-bold text-ink-primary uppercase tracking-wider">
                 Vault Index
@@ -363,7 +363,7 @@ export default function SkyPage() {
               type="button"
               onClick={() => setIsIndexOpen(false)}
               aria-label="Close vault index"
-              className="min-w-[34px] min-h-[34px] rounded-lg bg-black/45 border border-white/15 flex items-center justify-center text-ink-secondary hover:text-ink-primary"
+              className="min-w-[44px] min-h-[44px] rounded-lg bg-black/45 border border-white/15 flex items-center justify-center text-ink-secondary hover:text-ink-primary shrink-0"
             >
               <X className="w-4 h-4" aria-hidden="true" />
             </button>

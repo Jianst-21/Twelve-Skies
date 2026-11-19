@@ -18,6 +18,8 @@ export default function LandingHeader() {
   useEffect(() => {
     if (!mobileOpen) return;
 
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     closeRef.current?.focus();
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -28,12 +30,15 @@ export default function LandingHeader() {
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [mobileOpen]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/12 bg-space-black">
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 border-b border-white/12 bg-space-black pt-[env(safe-area-inset-top)]">
+      <div className="max-w-7xl mx-auto pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] sm:px-8 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-3 group min-h-[44px]">
           <span className="w-9 h-9 rounded-lg border border-cyan-glow/30 bg-space-abyss flex items-center justify-center text-cyan-glow group-hover:border-cyan-glow transition-colors">
             <CelestialLogo size={24} />
@@ -48,7 +53,7 @@ export default function LandingHeader() {
             <a
               key={item.href}
               href={item.href}
-              className="text-sm font-medium text-ink-secondary hover:text-ink-primary transition-colors py-2"
+              className="min-h-[44px] px-1 inline-flex items-center text-sm font-medium text-ink-secondary hover:text-ink-primary transition-colors"
             >
               {item.label}
             </a>
@@ -88,7 +93,7 @@ export default function LandingHeader() {
           role="dialog"
           aria-modal="true"
           aria-label="Mobile navigation"
-          className="fixed inset-0 z-50 bg-space-black p-6 flex flex-col justify-between sm:hidden"
+          className="fixed inset-0 z-50 bg-space-black overflow-y-auto pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] flex flex-col justify-between gap-6 sm:hidden"
         >
           <div>
             <div className="flex items-center justify-between pb-6 border-b border-white/10">

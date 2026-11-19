@@ -128,7 +128,7 @@ export default function HeroSkySection({
                     type="button"
                     onClick={handlePrev}
                     aria-label="Previous constellation"
-                    className="min-w-[44px] min-h-[44px] sm:min-w-[36px] sm:min-h-[36px] rounded-lg border border-white/15 bg-space-black/80 inline-flex items-center justify-center text-ink-primary hover:border-cyan-glow transition-colors"
+                    className="min-w-[44px] min-h-[44px] xl:min-w-[38px] xl:min-h-[38px] rounded-lg border border-white/15 bg-space-black/80 inline-flex items-center justify-center text-ink-primary hover:border-cyan-glow transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                   </button>
@@ -136,7 +136,7 @@ export default function HeroSkySection({
                     type="button"
                     onClick={handleNext}
                     aria-label="Next constellation"
-                    className="min-w-[44px] min-h-[44px] sm:min-w-[36px] sm:min-h-[36px] rounded-lg border border-white/15 bg-space-black/80 inline-flex items-center justify-center text-ink-primary hover:border-cyan-glow transition-colors"
+                    className="min-w-[44px] min-h-[44px] xl:min-w-[38px] xl:min-h-[38px] rounded-lg border border-white/15 bg-space-black/80 inline-flex items-center justify-center text-ink-primary hover:border-cyan-glow transition-colors"
                   >
                     <ChevronRight className="w-4 h-4" aria-hidden="true" />
                   </button>
@@ -146,7 +146,7 @@ export default function HeroSkySection({
               <div
                 role="tablist"
                 aria-label="Switch between all twelve constellations in the 3D sky"
-                className="grid grid-cols-6 sm:grid-cols-12 gap-1.5"
+                className="grid grid-cols-6 md:grid-cols-12 lg:grid-cols-6 xl:grid-cols-12 gap-1.5"
               >
                 {CONSTELLATIONS.map((c) => {
                   const isSelected = c.id === activeConstellation.id;
@@ -159,7 +159,7 @@ export default function HeroSkySection({
                       aria-label={`${c.name} (${c.periodText})`}
                       title={`${c.name} (${c.periodText})`}
                       onClick={() => onSelectConstellation(c.id)}
-                      className={`min-h-[44px] sm:min-h-[38px] rounded-lg border flex items-center justify-center transition-colors ${
+                      className={`min-h-[44px] xl:min-h-[40px] rounded-lg border flex items-center justify-center transition-colors ${
                         isSelected
                           ? "border-cyan-glow bg-space-abyss text-ink-primary"
                           : "border-white/12 bg-space-black/80 text-ink-secondary hover:border-white/35 hover:text-ink-primary"
@@ -182,15 +182,16 @@ export default function HeroSkySection({
           <div className="lg:col-span-7 flex flex-col justify-end lg:min-h-[500px] pointer-events-none">
             <div className="lg:mt-auto lg:ml-auto w-full sm:max-w-md pointer-events-auto">
               <div className="rounded-xl border border-white/15 bg-space-abyss/80 backdrop-blur-md p-4">
-                <div className="flex items-center justify-between gap-3 mb-2.5 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-2.5 text-xs">
                   <div className="flex items-center gap-2 min-w-0">
                     <span
+                      className="shrink-0"
                       style={{ color: activeConstellation.glowColor }}
                       aria-hidden="true"
                     >
                       <ZodiacGlyph id={activeConstellation.id} size={15} />
                     </span>
-                    <span className="font-mono text-cyan-glow truncate">
+                    <span className="font-mono text-cyan-glow leading-snug">
                       {displayStarIndex !== null
                         ? `${activeConstellation.name} Star ${String(
                             displayStarIndex + 1
@@ -234,7 +235,7 @@ export default function HeroSkySection({
                           2,
                           "0"
                         )} covers ${starDateRange}. In your vault, photos taken in this window light up this star.`
-                      : `Covers ${activeConstellation.periodText} across ${activeConstellation.nodes.length} stars. Hover any star above, or add photos from this season in your private vault.`}
+                      : `Covers ${activeConstellation.periodText} across ${activeConstellation.nodes.length} stars. Hover or tap any star above, or add photos from this season in your private vault.`}
                   </p>
                 )}
               </div>

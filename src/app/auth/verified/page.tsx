@@ -90,12 +90,12 @@ function VerifiedActionsFallback() {
 
 export default function EmailVerifiedPage() {
   return (
-    <div className="relative min-h-screen bg-space-black text-ink-primary flex flex-col">
+    <div className="relative min-h-dvh bg-space-black text-ink-primary flex flex-col">
       <AuthSkyBackdrop focusedConstellationId="leo" desktopAlign="center" />
 
       {/* Top Observatory Bar (aligned with LandingHeader) */}
-      <header className="sticky top-0 z-30 border-b border-white/12 bg-space-black">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-30 border-b border-white/12 bg-space-black pt-[env(safe-area-inset-top)]">
+        <div className="max-w-7xl mx-auto pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] sm:px-8 h-16 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group min-h-[44px] shrink-0">
             <span className="w-9 h-9 rounded-lg border border-cyan-glow/30 bg-space-abyss flex items-center justify-center text-cyan-glow group-hover:border-cyan-glow transition-colors shrink-0">
               <CelestialLogo size={24} />
@@ -141,7 +141,7 @@ export default function EmailVerifiedPage() {
         </section>
       </main>
 
-      <footer className="relative z-10 border-t border-white/12 bg-space-black">
+      <footer className="relative z-10 border-t border-white/12 bg-space-black pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 text-center text-xs text-ink-muted">
           Protected by Supabase Auth and private Prisma ORM server boundaries.
         </div>

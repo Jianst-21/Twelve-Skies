@@ -147,7 +147,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-space-black text-ink-primary flex flex-col">
+    <div className="relative min-h-dvh bg-space-black text-ink-primary flex flex-col">
       {hasAlignedToday ? (
         <AuthSkyBackdrop
           focusedConstellationId={focusedConstellationId}
@@ -161,8 +161,8 @@ export default function LoginPage() {
       )}
 
       {/* Top Observatory Bar (aligned with LandingHeader) */}
-      <header className="sticky top-0 z-30 border-b border-white/12 bg-space-black">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-30 border-b border-white/12 bg-space-black pt-[env(safe-area-inset-top)]">
+        <div className="max-w-7xl mx-auto pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] sm:px-8 h-16 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group min-h-[44px] shrink-0">
             <span className="w-9 h-9 rounded-lg border border-cyan-glow/30 bg-space-abyss flex items-center justify-center text-cyan-glow group-hover:border-cyan-glow transition-colors shrink-0">
               <CelestialLogo size={24} />
@@ -294,7 +294,7 @@ export default function LoginPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@example.com"
-                        className="w-full min-h-[44px] pl-10 pr-4 py-2.5 rounded-lg bg-space-black/75 border border-cyan-glow/30 hover:border-cyan-glow/60 focus:border-cyan-glow text-ink-primary placeholder-ink-muted text-sm transition-colors"
+                        className="w-full min-h-[44px] pl-10 pr-4 py-2.5 rounded-lg bg-space-black/75 border border-cyan-glow/30 hover:border-cyan-glow/60 focus:border-cyan-glow text-ink-primary placeholder-ink-muted text-base lg:text-sm transition-colors"
                       />
                     </div>
                   </div>
@@ -322,7 +322,7 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Minimum 6 characters"
-                        className="w-full min-h-[44px] pl-10 pr-12 py-2.5 rounded-lg bg-space-black/75 border border-cyan-glow/30 hover:border-cyan-glow/60 focus:border-cyan-glow text-ink-primary placeholder-ink-muted text-sm transition-colors"
+                        className="w-full min-h-[44px] pl-10 pr-12 py-2.5 rounded-lg bg-space-black/75 border border-cyan-glow/30 hover:border-cyan-glow/60 focus:border-cyan-glow text-ink-primary placeholder-ink-muted text-base lg:text-sm transition-colors"
                       />
                       <button
                         type="button"
@@ -387,7 +387,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handlePrevConstellation}
                     aria-label="Previous constellation"
-                    className="min-w-[36px] min-h-[36px] rounded-lg border border-white/15 bg-space-abyss/80 inline-flex items-center justify-center text-ink-primary hover:border-cyan-glow transition-colors"
+                    className="min-w-[44px] min-h-[44px] xl:min-w-[38px] xl:min-h-[38px] rounded-lg border border-white/15 bg-space-abyss/80 inline-flex items-center justify-center text-ink-primary hover:border-cyan-glow transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                   </button>
@@ -395,7 +395,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handleNextConstellation}
                     aria-label="Next constellation"
-                    className="min-w-[36px] min-h-[36px] rounded-lg border border-white/15 bg-space-abyss/80 inline-flex items-center justify-center text-ink-primary hover:border-cyan-glow transition-colors"
+                    className="min-w-[44px] min-h-[44px] xl:min-w-[38px] xl:min-h-[38px] rounded-lg border border-white/15 bg-space-abyss/80 inline-flex items-center justify-center text-ink-primary hover:border-cyan-glow transition-colors"
                   >
                     <ChevronRight className="w-4 h-4" aria-hidden="true" />
                   </button>
@@ -406,7 +406,7 @@ export default function LoginPage() {
         </div>
       </main>
 
-      <footer className="relative z-10 border-t border-white/12 bg-space-black">
+      <footer className="relative z-10 border-t border-white/12 bg-space-black pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 text-center text-xs text-ink-muted">
           Protected by Supabase Auth and private Prisma ORM server boundaries.
         </div>

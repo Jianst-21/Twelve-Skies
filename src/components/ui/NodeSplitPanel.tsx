@@ -87,16 +87,16 @@ export default function NodeSplitPanel({
   return (
     <aside
       aria-label={`${constellation.name} Star Node ${nodeIndex + 1} memories`}
-      className="fixed inset-y-0 right-0 z-50 w-full sm:w-[85vw] md:w-[48vw] lg:w-[45vw] bg-space-abyss/92 backdrop-blur-md border-l border-cyan-glow/30 flex flex-col animate-panel-slide-in"
+      className="fixed inset-y-0 right-0 z-50 w-full sm:w-[82vw] md:w-[56vw] lg:w-[46vw] xl:w-[44vw] bg-space-abyss/92 backdrop-blur-md border-l border-cyan-glow/30 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pr-[env(safe-area-inset-right)] flex flex-col animate-panel-slide-in"
     >
       {/* Top Header */}
-      <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between gap-4">
-        <div>
+      <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <div className="flex items-center gap-2.5">
-            <span className="flex items-center" style={{ color: constellation.glowColor }}>
+            <span className="flex items-center shrink-0" style={{ color: constellation.glowColor }}>
               <ZodiacGlyph id={constellation.id} size={20} />
             </span>
-            <h2 className="font-display text-lg sm:text-xl font-bold tracking-wider text-ink-primary uppercase">
+            <h2 className="font-display text-base sm:text-xl font-bold tracking-wider text-ink-primary uppercase truncate">
               {constellation.name} · Star Node {String(nodeIndex + 1).padStart(2, "0")}
             </h2>
           </div>
@@ -109,7 +109,7 @@ export default function NodeSplitPanel({
           type="button"
           onClick={onClose}
           aria-label="Close star node panel"
-          className="min-w-[40px] min-h-[40px] rounded-lg bg-black/50 border border-white/15 flex items-center justify-center text-ink-secondary hover:text-ink-primary hover:border-cyan-glow transition-colors"
+          className="min-w-[44px] min-h-[44px] rounded-lg bg-black/50 border border-white/15 flex items-center justify-center text-ink-secondary hover:text-ink-primary hover:border-cyan-glow transition-colors shrink-0"
         >
           <X className="w-5 h-5" aria-hidden="true" />
         </button>
@@ -164,7 +164,7 @@ export default function NodeSplitPanel({
                         type="button"
                         onClick={handlePrevSlide}
                         aria-label="Previous photo"
-                        className="absolute left-3 top-1/2 -translate-y-1/2 min-w-[36px] min-h-[36px] rounded-lg bg-black/70 border border-white/20 text-white flex items-center justify-center hover:bg-cyan-glow hover:text-space-navy transition-colors"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] xl:min-w-[38px] xl:min-h-[38px] rounded-lg bg-black/70 border border-white/20 text-white flex items-center justify-center hover:bg-cyan-glow hover:text-space-navy transition-colors"
                       >
                         <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                       </button>
@@ -172,7 +172,7 @@ export default function NodeSplitPanel({
                         type="button"
                         onClick={handleNextSlide}
                         aria-label="Next photo"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 min-w-[36px] min-h-[36px] rounded-lg bg-black/70 border border-white/20 text-white flex items-center justify-center hover:bg-cyan-glow hover:text-space-navy transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] xl:min-w-[38px] xl:min-h-[38px] rounded-lg bg-black/70 border border-white/20 text-white flex items-center justify-center hover:bg-cyan-glow hover:text-space-navy transition-colors"
                       >
                         <ChevronRight className="w-4 h-4" aria-hidden="true" />
                       </button>
@@ -196,7 +196,7 @@ export default function NodeSplitPanel({
               <button
                 type="button"
                 onClick={() => onOpenUploadForNode(nodeIndex, new Date())}
-                className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-glow/15 border border-cyan-glow/40 text-cyan-glow text-xs font-semibold hover:bg-cyan-glow hover:text-space-navy transition-colors"
+                className="min-h-[44px] xl:min-h-[36px] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-cyan-glow/15 border border-cyan-glow/40 text-cyan-glow text-xs font-semibold hover:bg-cyan-glow hover:text-space-navy transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Add Photo</span>
@@ -251,7 +251,7 @@ export default function NodeSplitPanel({
                                 value={editLocation}
                                 onChange={(e) => setEditLocation(e.target.value)}
                                 placeholder="e.g. Kyoto, Mount Bromo"
-                                className="w-full px-3 py-1.5 text-xs rounded-lg bg-black/60 border border-cyan-glow/30 text-ink-primary placeholder-ink-muted focus:outline-none focus:border-cyan-glow"
+                                className="w-full min-h-[44px] xl:min-h-0 px-3 py-2 xl:py-1.5 text-base lg:text-xs rounded-lg bg-black/60 border border-cyan-glow/30 text-ink-primary placeholder-ink-muted focus:outline-none focus:border-cyan-glow"
                               />
                             </div>
                             <div>
@@ -267,7 +267,7 @@ export default function NodeSplitPanel({
                                 onChange={(e) => setEditCaption(e.target.value)}
                                 rows={2}
                                 placeholder="Write the story behind this moment..."
-                                className="w-full px-3 py-1.5 text-xs rounded-lg bg-black/60 border border-cyan-glow/30 text-ink-primary placeholder-ink-muted focus:outline-none focus:border-cyan-glow resize-none"
+                                className="w-full px-3 py-2 xl:py-1.5 text-base lg:text-xs rounded-lg bg-black/60 border border-cyan-glow/30 text-ink-primary placeholder-ink-muted focus:outline-none focus:border-cyan-glow resize-none"
                               />
                             </div>
                             <div className="flex items-center gap-2">
@@ -275,7 +275,7 @@ export default function NodeSplitPanel({
                                 type="button"
                                 disabled={isSubmitting || !editCaption.trim()}
                                 onClick={() => saveEdit(m.id)}
-                                className="min-h-[34px] px-3 py-1 rounded-md bg-cyan-glow text-space-navy text-xs font-bold inline-flex items-center gap-1 hover:bg-white disabled:opacity-50"
+                                className="min-h-[44px] xl:min-h-[34px] px-3.5 py-1.5 rounded-md bg-cyan-glow text-space-navy text-xs font-bold inline-flex items-center gap-1 hover:bg-white disabled:opacity-50"
                               >
                                 <Check className="w-3.5 h-3.5" aria-hidden="true" />
                                 <span>{isSubmitting ? "Saving..." : "Save"}</span>
@@ -283,7 +283,7 @@ export default function NodeSplitPanel({
                               <button
                                 type="button"
                                 onClick={() => setEditingId(null)}
-                                className="min-h-[34px] px-3 py-1 rounded-md bg-white/10 text-ink-primary text-xs hover:bg-white/20"
+                                className="min-h-[44px] xl:min-h-[34px] px-3.5 py-1.5 rounded-md bg-white/10 text-ink-primary text-xs hover:bg-white/20"
                               >
                                 Cancel
                               </button>
@@ -325,9 +325,9 @@ export default function NodeSplitPanel({
                                   onClick={() => startEdit(m)}
                                   aria-label="Edit story or location"
                                   title="Edit story or location"
-                                  className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center rounded-md text-ink-secondary hover:text-cyan-glow hover:bg-white/5 transition-colors"
+                                  className="min-w-[44px] min-h-[44px] xl:min-w-[34px] xl:min-h-[34px] inline-flex items-center justify-center rounded-md text-ink-secondary hover:text-cyan-glow hover:bg-white/5 transition-colors"
                                 >
-                                  <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
+                                  <Edit2 className="w-4 h-4 xl:w-3.5 xl:h-3.5" aria-hidden="true" />
                                 </button>
                                 <button
                                   type="button"
@@ -338,9 +338,9 @@ export default function NodeSplitPanel({
                                   }
                                   aria-label="Delete memory"
                                   title="Delete memory"
-                                  className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center rounded-md text-ink-secondary hover:text-rose-400 hover:bg-white/5 transition-colors"
+                                  className="min-w-[44px] min-h-[44px] xl:min-w-[34px] xl:min-h-[34px] inline-flex items-center justify-center rounded-md text-ink-secondary hover:text-rose-400 hover:bg-white/5 transition-colors"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                                  <Trash2 className="w-4 h-4 xl:w-3.5 xl:h-3.5" aria-hidden="true" />
                                 </button>
                               </div>
                             </div>
@@ -355,14 +355,14 @@ export default function NodeSplitPanel({
                                     type="button"
                                     disabled={isSubmitting}
                                     onClick={() => confirmDelete(m.id)}
-                                    className="px-2.5 py-1 rounded bg-rose-500 text-white font-semibold hover:bg-rose-400 disabled:opacity-50"
+                                    className="min-h-[44px] xl:min-h-[32px] px-3 py-1 rounded bg-rose-500 text-white font-semibold hover:bg-rose-400 disabled:opacity-50"
                                   >
                                     {isSubmitting ? "Removing..." : "Delete"}
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => setConfirmDeleteId(null)}
-                                    className="px-2.5 py-1 rounded bg-white/10 text-ink-primary hover:bg-white/20"
+                                    className="min-h-[44px] xl:min-h-[32px] px-3 py-1 rounded bg-white/10 text-ink-primary hover:bg-white/20"
                                   >
                                     Cancel
                                   </button>

@@ -215,12 +215,13 @@ export default function SkyCanvas({
         ? activeDomeConstellation.nodes[selectedNodeIndex]
         : null;
 
-    // On desktop split-view (right 45vw panel open), shift look target right so
-    // the selected star node centers in the unobstructed left 55vw sky region.
+    // On tablet/desktop split-view, shift look target right so
+    // the selected star node centers in the unobstructed left sky region.
     let splitOffsetTan = 0;
     if (isSplitView && typeof window !== "undefined" && window.innerWidth >= 768) {
       const aspect = window.innerWidth / Math.max(window.innerHeight, 1);
-      splitOffsetTan = Math.tan((nextFov * Math.PI) / 360) * aspect * 0.35;
+      const offsetRatio = window.innerWidth < 1024 ? 0.42 : 0.35;
+      splitOffsetTan = Math.tan((nextFov * Math.PI) / 360) * aspect * offsetRatio;
     }
 
     const dir = computeTargetDirection(
@@ -232,10 +233,19 @@ export default function SkyCanvas({
     isFlyingRef.current = true;
   }, [activeDomeConstellation, selectedNodeIndex, isSplitView, resetTrigger]);
 
-  // Smooth wheel-to-FOV zoom inside the celestial sphere
+  // Smooth wheel-to-FOV and two-finger pinch-to-FOV zoom inside the celestial sphere
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+
+    let pinchStartDist: number | null = null;
+    let pinchStartFov = CONSTELLATION_FOV;
+
+    const getTouchDistance = (touches: TouchList) => {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.hypot(dx, dy);
+    };
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -248,8 +258,48 @@ export default function SkyCanvas({
       isZoomingRef.current = true;
     };
 
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        pinchStartDist = getTouchDistance(e.touches);
+        pinchStartFov = targetFovRef.current;
+        isFlyingRef.current = false;
+      } else {
+        pinchStartDist = null;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && pinchStartDist && pinchStartDist > 0) {
+        e.preventDefault();
+        const currentDist = getTouchDistance(e.touches);
+        const scale = pinchStartDist / Math.max(currentDist, 1);
+        targetFovRef.current = THREE.MathUtils.clamp(
+          pinchStartFov * scale,
+          MIN_FOV,
+          MAX_FOV
+        );
+        isZoomingRef.current = true;
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        pinchStartDist = null;
+      }
+    };
+
     el.addEventListener("wheel", handleWheel, { passive: false });
-    return () => el.removeEventListener("wheel", handleWheel);
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchmove", handleTouchMove);
+      el.removeEventListener("touchend", handleTouchEnd);
+      el.removeEventListener("touchcancel", handleTouchEnd);
+    };
   }, []);
 
   return (

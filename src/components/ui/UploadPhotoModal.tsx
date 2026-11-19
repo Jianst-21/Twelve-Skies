@@ -201,16 +201,16 @@ export default function UploadPhotoModal({
           onClose();
         }
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:p-6 bg-black/75 backdrop-blur-md"
     >
-      <div className="relative w-full max-w-lg p-6 sm:p-7 rounded-xl bg-space-abyss/95 border border-cyan-glow/30 animate-modal-reveal max-h-[92vh] overflow-y-auto">
+      <div className="relative w-full max-w-lg p-5 sm:p-7 rounded-xl bg-space-abyss/95 border border-cyan-glow/30 animate-modal-reveal max-h-[90dvh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-cyan-glow/15 border border-cyan-glow/40 flex items-center justify-center text-cyan-glow">
+        <div className="flex items-center justify-between gap-3 pb-4 border-b border-white/10 mb-5">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-lg bg-cyan-glow/15 border border-cyan-glow/40 flex items-center justify-center text-cyan-glow shrink-0">
               <CelestialLogo size={23} />
             </div>
-            <div>
+            <div className="min-w-0">
               <h2
                 id="upload-modal-title"
                 className="font-display text-lg font-bold tracking-wide text-ink-primary"
@@ -228,7 +228,7 @@ export default function UploadPhotoModal({
             type="button"
             onClick={onClose}
             aria-label="Close upload modal"
-            className="min-w-[38px] min-h-[38px] rounded-lg bg-black/45 border border-white/15 flex items-center justify-center text-ink-secondary hover:text-ink-primary hover:border-cyan-glow transition-colors"
+            className="min-w-[44px] min-h-[44px] rounded-lg bg-black/45 border border-white/15 flex items-center justify-center text-ink-secondary hover:text-ink-primary hover:border-cyan-glow transition-colors shrink-0"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -274,7 +274,7 @@ export default function UploadPhotoModal({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-0 bg-black/65 opacity-0 group-hover:opacity-100 focus:opacity-100 flex items-center justify-center text-xs font-medium text-white transition-opacity gap-2"
+                  className="absolute bottom-2.5 right-2.5 min-h-[44px] px-3.5 rounded-lg bg-black/80 border border-white/25 hover:border-cyan-glow flex items-center justify-center text-xs font-medium text-white transition-colors gap-2"
                 >
                   <FileImage className="w-4 h-4" aria-hidden="true" />
                   <span>Replace Photograph</span>
@@ -316,7 +316,7 @@ export default function UploadPhotoModal({
                 required
                 value={dateStr}
                 onChange={(e) => setDateStr(e.target.value)}
-                className="w-full min-h-[44px] pl-10 pr-4 py-2 rounded-lg bg-black/55 border border-cyan-glow/30 text-ink-primary font-mono text-xs sm:text-sm focus:outline-none focus:border-cyan-glow"
+                className="w-full min-h-[44px] pl-10 pr-4 py-2 rounded-lg bg-black/55 border border-cyan-glow/30 text-ink-primary font-mono text-base lg:text-sm focus:outline-none focus:border-cyan-glow [color-scheme:dark]"
               />
             </div>
 
@@ -377,7 +377,7 @@ export default function UploadPhotoModal({
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Kyoto, Mount Bromo, Lake Toba"
                 maxLength={150}
-                className="w-full min-h-[44px] pl-10 pr-4 py-2 rounded-lg bg-black/55 border border-cyan-glow/30 text-ink-primary placeholder-ink-muted text-xs sm:text-sm focus:outline-none focus:border-cyan-glow"
+                className="w-full min-h-[44px] pl-10 pr-4 py-2 rounded-lg bg-black/55 border border-cyan-glow/30 text-ink-primary placeholder-ink-muted text-base lg:text-sm focus:outline-none focus:border-cyan-glow"
               />
             </div>
           </div>
@@ -397,7 +397,7 @@ export default function UploadPhotoModal({
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Write what happened when this photograph was taken..."
-              className="w-full px-3.5 py-2.5 rounded-lg bg-black/55 border border-cyan-glow/30 text-ink-primary placeholder-ink-muted text-xs sm:text-sm focus:outline-none focus:border-cyan-glow resize-none"
+              className="w-full px-3.5 py-2.5 rounded-lg bg-black/55 border border-cyan-glow/30 text-ink-primary placeholder-ink-muted text-base lg:text-sm focus:outline-none focus:border-cyan-glow resize-none"
             />
           </div>
 

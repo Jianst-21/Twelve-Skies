@@ -102,8 +102,8 @@ export default function CapabilitiesSection({
         </div>
 
         {/* Capability 1: Place a memory by date (live 3D sky sync) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          <div className="relative isolate lg:col-span-5 pointer-events-auto py-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-12 items-center">
+          <div className="relative isolate lg:col-span-4 xl:col-span-5 pointer-events-auto py-2">
             <div
               aria-hidden="true"
               className="pointer-events-none absolute -inset-x-4 sm:-inset-x-8 -inset-y-6 -z-10"
@@ -120,9 +120,9 @@ export default function CapabilitiesSection({
             </p>
           </div>
 
-          <div className="lg:col-span-7 pointer-events-auto rounded-xl border border-white/15 bg-space-abyss/92 p-5 sm:p-7">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
-              <div className="md:col-span-6 flex flex-col justify-between">
+          <div className="lg:col-span-8 xl:col-span-7 pointer-events-auto rounded-xl border border-white/15 bg-space-abyss/92 p-5 sm:p-7">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-stretch">
+              <div className="md:col-span-6 flex flex-col justify-between min-w-0">
                 <div>
                   <label
                     htmlFor="landing-date-input"
@@ -142,7 +142,7 @@ export default function CapabilitiesSection({
                     aria-describedby="landing-date-hint"
                     value={dateInput}
                     onChange={(e) => handleDateChange(e.target.value)}
-                    className="w-full min-h-[44px] px-3.5 py-2.5 rounded-lg bg-space-black/85 border border-cyan-glow/40 text-ink-primary font-mono text-sm hover:border-cyan-glow/75 focus:border-cyan-glow transition-colors [color-scheme:dark]"
+                    className="w-full min-h-[44px] px-3.5 py-2.5 rounded-lg bg-space-black/85 border border-cyan-glow/40 text-ink-primary font-mono text-base lg:text-sm hover:border-cyan-glow/75 focus:border-cyan-glow transition-colors [color-scheme:dark]"
                   />
                 </div>
 
@@ -150,7 +150,7 @@ export default function CapabilitiesSection({
                   <p className="text-xs text-ink-secondary mb-2">
                     Or jump to a sample date
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {QUICK_DATES.map((preset) => {
                       const isSelected = dateInput === preset.iso;
                       return (
@@ -158,7 +158,7 @@ export default function CapabilitiesSection({
                           key={preset.iso}
                           type="button"
                           onClick={() => handleDateChange(preset.iso)}
-                          className={`min-h-[44px] px-3 py-2 rounded-lg text-xs font-mono border transition-colors ${
+                          className={`min-h-[44px] px-2 py-2 rounded-lg text-xs font-mono border whitespace-nowrap transition-colors ${
                             isSelected
                               ? "border-cyan-glow bg-cyan-glow/15 text-cyan-glow font-semibold"
                               : "border-white/15 bg-space-black/50 text-ink-secondary hover:border-white/35 hover:text-ink-primary"
@@ -171,7 +171,7 @@ export default function CapabilitiesSection({
                     <button
                       type="button"
                       onClick={handleSelectToday}
-                      className={`min-h-[44px] px-3 py-2 rounded-lg text-xs font-mono border transition-colors ${
+                      className={`min-h-[44px] px-2 py-2 rounded-lg text-xs font-mono border whitespace-nowrap transition-colors ${
                         isTodaySelected
                           ? "border-cyan-glow bg-cyan-glow/15 text-cyan-glow font-semibold"
                           : "border-white/15 bg-space-black/50 text-ink-secondary hover:border-white/35 hover:text-ink-primary"
@@ -183,7 +183,7 @@ export default function CapabilitiesSection({
                 </div>
               </div>
 
-              <div className="md:col-span-6 rounded-lg border border-white/10 bg-space-black/70 p-4 sm:p-5 flex flex-col justify-between">
+              <div className="md:col-span-6 rounded-lg border border-white/10 bg-space-black/70 p-4 sm:p-5 flex flex-col justify-between min-w-0">
                 {mapping ? (
                   <>
                     <div>
@@ -211,15 +211,15 @@ export default function CapabilitiesSection({
 
                       <div className="pt-3 border-t border-white/10 space-y-1.5 font-mono text-xs">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-ink-secondary">Assigned star</span>
-                          <span className="text-cyan-glow font-semibold">
+                          <span className="text-ink-secondary shrink-0">Assigned star</span>
+                          <span className="text-cyan-glow font-semibold whitespace-nowrap">
                             Star {String(mapping.nodeIndex + 1).padStart(2, "0")} of{" "}
                             {String(mapping.totalNodes).padStart(2, "0")}
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-ink-secondary">Star date window</span>
-                          <span className="text-ink-primary">{mapping.formattedRange}</span>
+                          <span className="text-ink-secondary shrink-0">Star date window</span>
+                          <span className="text-ink-primary whitespace-nowrap">{mapping.formattedRange}</span>
                         </div>
                       </div>
                     </div>
@@ -407,7 +407,7 @@ export default function CapabilitiesSection({
                 />
               </div>
 
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="min-w-0">
                   <h4 className="font-display text-lg font-semibold text-ink-primary">
                     {currentSlide.title}
@@ -415,11 +415,11 @@ export default function CapabilitiesSection({
                   <p className="text-sm text-ink-secondary leading-relaxed mt-1">
                     {currentSlide.caption}
                   </p>
-                  <div className="flex flex-wrap items-center gap-4 mt-3 font-mono text-xs text-ink-secondary">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 font-mono text-xs text-ink-secondary">
                     <span>{currentSlide.displayDate}</span>
                     <span className="inline-flex items-center gap-1">
                       <MapPin
-                        className="w-3.5 h-3.5 text-amber-star"
+                        className="w-3.5 h-3.5 text-amber-star shrink-0"
                         aria-hidden="true"
                       />
                       {currentSlide.location}
@@ -427,7 +427,7 @@ export default function CapabilitiesSection({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center justify-end gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() =>

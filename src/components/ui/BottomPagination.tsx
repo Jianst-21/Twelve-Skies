@@ -29,10 +29,10 @@ export default function BottomPagination({
   return (
     <nav
       aria-label="Constellation switcher"
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 select-none max-w-[95vw]"
+      className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] sm:bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 select-none max-w-[95vw]"
     >
       {/* 12 Zodiac Astronomical Glyphs Quick Selector */}
-      <div className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-black/80 border border-white/15 backdrop-blur-md">
+      <div className="hidden sm:flex [@media(max-height:500px)]:hidden items-center gap-1 px-2 py-1.5 rounded-xl bg-black/80 border border-white/15 backdrop-blur-md max-w-[92vw] overflow-x-auto">
         {CONSTELLATIONS.map((c) => {
           const isActive = c.id === currentConstellation.id;
           return (
@@ -43,7 +43,7 @@ export default function BottomPagination({
               aria-label={`Focus ${c.name} (${c.periodText})`}
               aria-current={isActive ? "true" : undefined}
               title={`${c.name} (${c.periodText})`}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+              className={`min-w-[44px] min-h-[44px] xl:min-w-[36px] xl:min-h-[36px] shrink-0 rounded-lg flex items-center justify-center transition-colors ${
                 isActive
                   ? "bg-cyan-glow text-space-navy font-bold"
                   : "text-ink-secondary hover:text-ink-primary hover:bg-white/10"
@@ -56,18 +56,18 @@ export default function BottomPagination({
       </div>
 
       {/* Main Constellation Pagination Control */}
-      <div className="flex items-center gap-2 sm:gap-3 px-2.5 py-1.5 rounded-xl bg-space-abyss/85 border border-cyan-glow/30 backdrop-blur-md">
+      <div className="flex items-center gap-2 sm:gap-3 px-2 py-1.5 rounded-xl bg-space-abyss/85 border border-cyan-glow/30 backdrop-blur-md">
         <button
           type="button"
           onClick={handlePrev}
           aria-label="Previous constellation"
           title="Previous constellation"
-          className="min-w-[40px] min-h-[40px] rounded-lg flex items-center justify-center bg-black/45 border border-white/15 text-ink-primary hover:bg-cyan-glow hover:text-space-navy hover:border-cyan-glow transition-colors"
+          className="min-w-[44px] min-h-[44px] rounded-lg flex items-center justify-center bg-black/45 border border-white/15 text-ink-primary hover:bg-cyan-glow hover:text-space-navy hover:border-cyan-glow transition-colors shrink-0"
         >
           <ChevronLeft className="w-5 h-5" aria-hidden="true" />
         </button>
 
-        <div className="px-2 sm:px-5 py-0.5 text-center min-w-[155px] sm:min-w-[210px]">
+        <div className="px-2 sm:px-5 py-0.5 text-center min-w-[148px] sm:min-w-[210px]">
           <div className="flex items-center justify-center gap-2">
             <span
               className="flex items-center justify-center"
@@ -89,7 +89,7 @@ export default function BottomPagination({
           onClick={handleNext}
           aria-label="Next constellation"
           title="Next constellation"
-          className="min-w-[40px] min-h-[40px] rounded-lg flex items-center justify-center bg-black/45 border border-white/15 text-ink-primary hover:bg-cyan-glow hover:text-space-navy hover:border-cyan-glow transition-colors"
+          className="min-w-[44px] min-h-[44px] rounded-lg flex items-center justify-center bg-black/45 border border-white/15 text-ink-primary hover:bg-cyan-glow hover:text-space-navy hover:border-cyan-glow transition-colors shrink-0"
         >
           <ChevronRight className="w-5 h-5" aria-hidden="true" />
         </button>
