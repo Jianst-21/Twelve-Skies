@@ -63,8 +63,8 @@ export default function HeroObservatory() {
             </h1>
 
             <p className="text-base sm:text-lg text-ink-secondary leading-relaxed max-w-[46ch] mb-7">
-              Twelve Skies maps personal photographs into twelve 3D zodiac constellations,
-              placing every moment on its exact star coordinate by calendar date.
+              Twelve Skies turns your personal photographs and journal notes into a quiet 3D night
+              sky, placing each moment on the constellation star of its calendar date.
             </p>
 
             <div className="flex flex-wrap items-center gap-3.5 mb-8">
@@ -83,19 +83,19 @@ export default function HeroObservatory() {
               </Link>
             </div>
 
-            {/* Technical Observatory Coordinates (Factual Architecture Specs) */}
+            {/* Quiet Vault Highlights */}
             <dl className="grid grid-cols-3 gap-4 pt-5 border-t border-white/10 text-xs">
               <div>
-                <dt className="text-ink-muted mb-1">Dome Geometry</dt>
-                <dd className="font-mono text-ink-primary font-medium">360 deg Orbit</dd>
+                <dt className="text-ink-muted mb-1">Organized by Date</dt>
+                <dd className="text-ink-primary font-medium">Every day maps to a star</dd>
               </div>
               <div>
-                <dt className="text-ink-muted mb-1">Mapping Law</dt>
-                <dd className="font-mono text-ink-primary font-medium">B = floor(D/N)</dd>
+                <dt className="text-ink-muted mb-1">360° Sky Vault</dt>
+                <dd className="text-ink-primary font-medium">Explore your own sky</dd>
               </div>
               <div>
-                <dt className="text-ink-muted mb-1">Privacy Mode</dt>
-                <dd className="font-mono text-ink-primary font-medium">Private Only</dd>
+                <dt className="text-ink-muted mb-1">Private Sanctuary</dt>
+                <dd className="text-ink-primary font-medium">Visible only to you</dd>
               </div>
             </dl>
           </div>
@@ -117,7 +117,7 @@ export default function HeroObservatory() {
                   </span>
                 </div>
                 <span className="font-mono text-cyan-glow">
-                  Node {String(selectedNodeIdx + 1).padStart(2, "0")} of{" "}
+                  Star {String(selectedNodeIdx + 1).padStart(2, "0")} of{" "}
                   {String(activeConstellation.nodes.length).padStart(2, "0")} ({activeBucket.formattedRange})
                 </span>
               </div>
@@ -257,7 +257,7 @@ export default function HeroObservatory() {
 
               {/* Node Bucket Switcher Bar */}
               <div className="px-4 py-2.5 border-t border-white/10 bg-black/40 flex flex-wrap items-center justify-between gap-2 text-xs">
-                <span className="text-ink-muted">Select star node:</span>
+                <span className="text-ink-muted">Choose a star:</span>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {buckets.map((bucket) => {
                     const isActive = bucket.nodeIndex === selectedNodeIdx;

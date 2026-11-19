@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
@@ -12,11 +12,11 @@ import Constellation from "./Constellation";
 import { computeTargetDirection } from "./celestialMath";
 
 const ORBIT_RADIUS = 0.1;
-const MIN_FOV = 22;
-const MAX_FOV = 76;
+const MIN_FOV = 28;
+const MAX_FOV = 70;
 const OVERVIEW_FOV = 58;
-const CONSTELLATION_FOV = 50;
-const NODE_FOV = 36;
+const CONSTELLATION_FOV = 52;
+const NODE_FOV = 42;
 
 interface CameraRigProps {
   controlsRef: React.RefObject<OrbitControlsImpl | null>;
@@ -54,7 +54,7 @@ function CameraRig({
 
     // 1. Scale orbit drag speed smoothly with current zoom (FOV)
     if (controls) {
-      controls.rotateSpeed = -0.36 * (persp.fov / CONSTELLATION_FOV);
+      controls.rotateSpeed = -0.28 * (persp.fov / CONSTELLATION_FOV);
     }
 
     // 2. Smooth FOV zoom transition
@@ -63,7 +63,7 @@ function CameraRig({
         persp.fov = targetFovRef.current;
         isZoomingRef.current = false;
       } else {
-        const nextFov = THREE.MathUtils.damp(persp.fov, targetFovRef.current, 8, dt);
+        const nextFov = THREE.MathUtils.damp(persp.fov, targetFovRef.current, 5.2, dt);
         if (Math.abs(nextFov - targetFovRef.current) < 0.05) {
           persp.fov = targetFovRef.current;
           isZoomingRef.current = false;
@@ -90,7 +90,7 @@ function CameraRig({
         } else {
           fullQuat.current.setFromUnitVectors(currentDir.current, goal);
         }
-        const alpha = 1 - Math.exp(-5.5 * dt);
+        const alpha = 1 - Math.exp(-3.6 * dt);
         stepQuat.current.copy(IDENTITY_QUAT).slerp(fullQuat.current, alpha);
         currentDir.current.applyQuaternion(stepQuat.current).normalize();
         persp.position.copy(currentDir.current).multiplyScalar(-ORBIT_RADIUS);
@@ -133,6 +133,19 @@ export default function SkyCanvas({
   const goalDirRef = useRef(new THREE.Vector3(1, 0, 0));
   const targetFovRef = useRef(CONSTELLATION_FOV);
   const prevResetTriggerRef = useRef(resetTrigger);
+  const hasMountedRef = useRef(false);
+
+  const initialCamPos = useMemo<[number, number, number]>(() => {
+    const startConstellation = selectedConstellation ?? CONSTELLATIONS[0];
+    const dir = computeTargetDirection(startConstellation.center, null, 0);
+    return [
+      -dir[0] * ORBIT_RADIUS,
+      -dir[1] * ORBIT_RADIUS,
+      -dir[2] * ORBIT_RADIUS,
+    ];
+    // Mount-only initial camera alignment so page entry never triggers a dizzying spin
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Group memories by constellation and node
   const memoriesByConstellationAndNode = memories.reduce((acc, m) => {
@@ -149,6 +162,15 @@ export default function SkyCanvas({
   // Compute fly-to direction and FOV when selection, split-view, or reset changes
   useEffect(() => {
     if (!selectedConstellation) return;
+
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      const initDir = computeTargetDirection(selectedConstellation.center, null, 0);
+      goalDirRef.current.set(initDir[0], initDir[1], initDir[2]).normalize();
+      if (selectedNodeIndex === null) {
+        return;
+      }
+    }
 
     const didReset = resetTrigger !== prevResetTriggerRef.current;
     prevResetTriggerRef.current = resetTrigger;
@@ -171,7 +193,7 @@ export default function SkyCanvas({
     let splitOffsetTan = 0;
     if (isSplitView && typeof window !== "undefined" && window.innerWidth >= 768) {
       const aspect = window.innerWidth / Math.max(window.innerHeight, 1);
-      splitOffsetTan = Math.tan((nextFov * Math.PI) / 360) * aspect * 0.45;
+      splitOffsetTan = Math.tan((nextFov * Math.PI) / 360) * aspect * 0.35;
     }
 
     const dir = computeTargetDirection(
@@ -191,7 +213,7 @@ export default function SkyCanvas({
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       const next = THREE.MathUtils.clamp(
-        targetFovRef.current + e.deltaY * 0.025,
+        targetFovRef.current + e.deltaY * 0.018,
         MIN_FOV,
         MAX_FOV
       );
@@ -208,7 +230,7 @@ export default function SkyCanvas({
       <Canvas
         dpr={[1, 2]}
         camera={{
-          position: [-ORBIT_RADIUS, 0, 0],
+          position: initialCamPos,
           fov: CONSTELLATION_FOV,
           near: 0.05,
           far: 300,
@@ -224,19 +246,19 @@ export default function SkyCanvas({
 
         <SpaceDome />
 
-        {/* Inside-out celestial dome orbit controls; immediately preempts auto-flight on drag */}
+        {/* Inside-out celestial dome orbit controls; higher damping stops slippery coasting */}
         <OrbitControls
           ref={controlsRef}
           target={[0, 0, 0]}
           enableZoom={false}
           enablePan={false}
           enableDamping={true}
-          dampingFactor={0.07}
-          rotateSpeed={-0.36}
+          dampingFactor={0.14}
+          rotateSpeed={-0.28}
           minDistance={ORBIT_RADIUS}
           maxDistance={ORBIT_RADIUS}
-          minPolarAngle={0.22}
-          maxPolarAngle={Math.PI - 0.22}
+          minPolarAngle={0.45}
+          maxPolarAngle={Math.PI - 0.45}
           onStart={() => {
             isFlyingRef.current = false;
           }}

@@ -28,22 +28,22 @@ export default function LandingFooter() {
             <ul className="space-y-2 text-sm text-ink-secondary">
               <li>
                 <a href="#observatory" className="hover:text-ink-primary transition-colors">
-                  Observatory
+                  Sky Preview
                 </a>
               </li>
               <li>
                 <a href="#date-engine" className="hover:text-ink-primary transition-colors">
-                  Date Mapping Engine
+                  By Date
                 </a>
               </li>
               <li>
                 <a href="#constellations" className="hover:text-ink-primary transition-colors">
-                  Twelve Constellations
+                  Constellations
                 </a>
               </li>
               <li>
                 <a href="#archive" className="hover:text-ink-primary transition-colors">
-                  Illustrative Archive
+                  Memories
                 </a>
               </li>
             </ul>
@@ -67,8 +67,8 @@ export default function LandingFooter() {
         </div>
 
         <div className="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-ink-muted">
-          <p>Twelve Skies · Private 3D Astronomical Photo Vault</p>
-          <p className="font-mono">Next.js · Three.js · Prisma ORM · Supabase Auth</p>
+          <p>Twelve Skies · Private 3D Memory Archive</p>
+          <p>Quiet personal keeping beneath your own sky</p>
         </div>
       </div>
     </footer>

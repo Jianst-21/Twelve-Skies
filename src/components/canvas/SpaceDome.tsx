@@ -59,8 +59,8 @@ const SKY_FRAGMENT_SHADER = /* glsl */ `
     float horizon = exp(-abs(dir.y) * 2.6);
     vec3 baseSky = mix(vec3(0.0, 0.0, 0.0), vec3(0.012, 0.025, 0.085), horizon * 0.72);
 
-    // Tilted Milky Way galactic plane (aligned with spectral starfield)
-    vec3 galacticNormal = normalize(vec3(0.28, 0.72, -0.63));
+    // Tilted Milky Way galactic plane (aligned with J2000 spectral starfield)
+    vec3 galacticNormal = normalize(vec3(-0.868, 0.456, 0.197));
     float planeDist = abs(dot(dir, galacticNormal));
     float bandMask = exp(-planeDist * planeDist * 11.5);
 
@@ -75,7 +75,7 @@ const SKY_FRAGMENT_SHADER = /* glsl */ `
     milkyWay *= bandMask * (0.45 + cloudA * 0.85) * (1.0 - dustRift * 0.68);
 
     // Faint warm galactic core hint toward Sagittarius/Scorpio sector
-    vec3 coreDir = normalize(vec3(0.65, -0.18, -0.74));
+    vec3 coreDir = normalize(vec3(-0.06, -0.48, 0.87));
     float coreDist = length(dir - coreDir);
     float coreGlow = exp(-coreDist * coreDist * 5.2) * bandMask;
     vec3 coreColor = vec3(0.11, 0.075, 0.045) * coreGlow;
@@ -120,7 +120,7 @@ const STARFIELD_FRAGMENT_SHADER = /* glsl */ `
 
     // Gentle twinkle scaled down when uTime == 0 (reduced motion)
     float twinkle = uTime > 0.0
-      ? 0.82 + 0.18 * sin(uTime * (1.1 + fract(vPhase) * 1.4) + vPhase)
+      ? 0.90 + 0.10 * sin(uTime * (0.85 + fract(vPhase) * 0.9) + vPhase)
       : 1.0;
 
     float intensity = (core + halo) * twinkle;
@@ -173,19 +173,12 @@ export default function SpaceDome() {
     []
   );
 
-  // Subtle astronomical armillary rings + degree ticks at sphere radius 46.5
+  // Calm equatorial horizon ring + 30-degree house ticks at sphere radius 46.5
   const armillaryGeometries = useMemo(() => {
     const radius = 46.5;
-    const declY = 15;
-    const declRadius = Math.sqrt(radius * radius - declY * declY);
-
     const eclipticRing = createRingPoints(radius, 128, "xz", 0);
-    const upperParallel = createRingPoints(declRadius, 96, "xz", declY);
-    const lowerParallel = createRingPoints(declRadius, 96, "xz", -declY);
-    const meridianA = createRingPoints(radius, 96, "xy");
-    const meridianB = createRingPoints(radius, 96, "yz");
 
-    // 36 ecliptic degree ticks (every 10 deg; longer every 30 deg for the 12 houses)
+    // 36 ecliptic degree ticks (every 10 deg; longer every 30 deg)
     const tickPositions: THREE.Vector3[] = [];
     for (let deg = 0; deg < 360; deg += 10) {
       const rad = (deg * Math.PI) / 180;
@@ -200,10 +193,6 @@ export default function SpaceDome() {
 
     return {
       eclipticRing,
-      upperParallel,
-      lowerParallel,
-      meridianA,
-      meridianB,
       ticks,
     };
   }, []);
@@ -215,7 +204,7 @@ export default function SpaceDome() {
     };
   }, [starGeometry, armillaryGeometries]);
 
-  useFrame((state, delta) => {
+  useFrame((state) => {
     const mat = starMaterialRef.current;
     if (reducedMotionRef.current) {
       if (mat) mat.uniforms.uTime.value = 0;
@@ -225,9 +214,7 @@ export default function SpaceDome() {
     if (mat) {
       mat.uniforms.uTime.value = state.clock.elapsedTime;
     }
-    if (starsRef.current) {
-      starsRef.current.rotation.y += delta * 0.0035;
-    }
+    // Keep background starfield locked to constellations to avoid motion shear/dizziness
   });
 
   return (
@@ -257,26 +244,14 @@ export default function SpaceDome() {
         />
       </points>
 
-      {/* Subtle 3D celestial observatory armillary frame */}
+      {/* Calm equatorial horizon reference ring (replaces dense meridian cage) */}
       <group>
         <lineLoop geometry={armillaryGeometries.eclipticRing}>
-          <lineBasicMaterial color="#7cdee4" transparent opacity={0.11} depthWrite={false} />
+          <lineBasicMaterial color="#7cdee4" transparent opacity={0.09} depthWrite={false} />
         </lineLoop>
         <lineSegments geometry={armillaryGeometries.ticks}>
-          <lineBasicMaterial color="#7cdee4" transparent opacity={0.16} depthWrite={false} />
+          <lineBasicMaterial color="#7cdee4" transparent opacity={0.12} depthWrite={false} />
         </lineSegments>
-        <lineLoop geometry={armillaryGeometries.upperParallel}>
-          <lineBasicMaterial color="#9fb2cc" transparent opacity={0.05} depthWrite={false} />
-        </lineLoop>
-        <lineLoop geometry={armillaryGeometries.lowerParallel}>
-          <lineBasicMaterial color="#9fb2cc" transparent opacity={0.05} depthWrite={false} />
-        </lineLoop>
-        <lineLoop geometry={armillaryGeometries.meridianA}>
-          <lineBasicMaterial color="#9fb2cc" transparent opacity={0.04} depthWrite={false} />
-        </lineLoop>
-        <lineLoop geometry={armillaryGeometries.meridianB}>
-          <lineBasicMaterial color="#9fb2cc" transparent opacity={0.04} depthWrite={false} />
-        </lineLoop>
       </group>
     </group>
   );

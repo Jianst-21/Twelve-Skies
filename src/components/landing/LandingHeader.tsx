@@ -6,10 +6,10 @@ import { Menu, X } from "lucide-react";
 import CelestialLogo from "@/components/ui/CelestialLogo";
 
 const NAV_LINKS = [
-  { href: "#observatory", label: "Observatory" },
-  { href: "#date-engine", label: "Date Engine" },
-  { href: "#constellations", label: "12 Houses" },
-  { href: "#archive", label: "Archive" },
+  { href: "#observatory", label: "Sky Preview" },
+  { href: "#date-engine", label: "By Date" },
+  { href: "#constellations", label: "Constellations" },
+  { href: "#archive", label: "Memories" },
 ];
 
 export default function LandingHeader() {

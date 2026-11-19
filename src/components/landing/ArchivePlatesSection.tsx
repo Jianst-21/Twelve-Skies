@@ -116,10 +116,9 @@ export default function ArchivePlatesSection() {
                 Built for Quiet Reflection, Never Public Feeds
               </h2>
               <p className="text-base text-ink-secondary leading-relaxed mb-6 max-w-[60ch]">
-                Twelve Skies omits follower counts, public timelines, and social algorithms.
-                Authentication runs through Supabase Auth, uploads compress locally to WebP before
-                storage, and every memory record stays scoped to your private owner session via
-                server-side Prisma ORM routes.
+                Twelve Skies omits follower counts, public timelines, and social algorithms. Sign
+                in to keep your photographs, locations, and written notes inside a private sky
+                vault arranged solely by your own dates.
               </p>
 
               <div className="flex flex-wrap gap-3.5">

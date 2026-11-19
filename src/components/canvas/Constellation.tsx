@@ -114,7 +114,7 @@ export default function Constellation({
       {/* Offset Astronomical Nameplate (positioned cleanly below lowest star) */}
       {isInFront && (
         <group position={labelPosition}>
-          <Html center distanceFactor={32} zIndexRange={[5, 0]}>
+          <Html center zIndexRange={[5, 0]}>
             <button
               type="button"
               className={`transition-all duration-200 cursor-pointer select-none px-3 py-1 rounded-lg border flex items-center gap-2 whitespace-nowrap ${

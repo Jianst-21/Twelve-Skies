@@ -39,12 +39,11 @@ export default function DateMappingSimulator() {
           {/* Left: Explanation & Live Date Picker */}
           <div className="lg:col-span-5">
             <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-ink-primary mb-4">
-              How Every Calendar Date Finds Its Star
+              Every Date Has Its Own Star
             </h2>
             <p className="text-base text-ink-secondary leading-relaxed mb-6">
-              Each zodiac constellation spans a fixed calendar cycle divided proportionally
-              across its physical star nodes. Nothing clusters on one star, and no date falls
-              between houses.
+              Pick the day a photograph was taken, and Twelve Skies places it inside that season&apos;s
+              constellation. Days flow evenly across the stars so no moment gets lost or crowded.
             </p>
 
             {/* Real Interactive Date Input */}
@@ -53,7 +52,7 @@ export default function DateMappingSimulator() {
                 htmlFor="simulator-date"
                 className="block text-sm font-medium text-ink-primary mb-2"
               >
-                Test any photograph date
+                Try any memory date
               </label>
               <input
                 id="simulator-date"
@@ -115,52 +114,46 @@ export default function DateMappingSimulator() {
               </div>
 
               <div className="text-left sm:text-right">
-                <div className="font-mono text-xs text-ink-muted">Assigned Coordinate</div>
+                <div className="font-mono text-xs text-ink-muted">Destination Star</div>
                 <div className="font-mono text-lg font-semibold text-cyan-glow">
-                  Star Node #{String(mapping.nodeIndex + 1).padStart(2, "0")}
+                  Star #{String(mapping.nodeIndex + 1).padStart(2, "0")} in {mapping.constellation.name}
                 </div>
                 <div className="font-mono text-xs text-ink-secondary">
-                  Window: {mapping.formattedRange}
+                  Dates: {mapping.formattedRange}
                 </div>
               </div>
             </div>
 
-            {/* Mathematical Formula Telemetry */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-5 border-b border-white/10 font-mono text-xs">
+            {/* Season & Star Span Summary */}
+            <div className="grid grid-cols-3 gap-4 py-5 border-b border-white/10 font-mono text-xs">
               <div>
-                <div className="text-ink-muted mb-1">Cycle Days (D)</div>
+                <div className="text-ink-muted mb-1">Season Length</div>
                 <div className="text-base text-ink-primary font-semibold">
                   {mapping.totalDays} days
                 </div>
               </div>
               <div>
-                <div className="text-ink-muted mb-1">Star Nodes (N)</div>
+                <div className="text-ink-muted mb-1">Constellation Stars</div>
                 <div className="text-base text-ink-primary font-semibold">
                   {mapping.totalNodes} stars
                 </div>
               </div>
               <div>
-                <div className="text-ink-muted mb-1">Base Span (B)</div>
-                <div className="text-base text-ink-primary font-semibold">
-                  {baseDays} days/node
-                </div>
-              </div>
-              <div>
-                <div className="text-ink-muted mb-1">Remainder (R)</div>
+                <div className="text-ink-muted mb-1">Days Per Star</div>
                 <div className="text-base text-amber-star font-semibold">
-                  +{remainderDays} first nodes
+                  {remainderDays > 0 ? `${baseDays} to ${baseDays + 1} days` : `${baseDays} days`}
                 </div>
               </div>
             </div>
 
-            {/* Proportional Day Distribution Bars */}
+            {/* Date Windows Across Stars */}
             <div className="pt-6">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs mb-3">
                 <span className="text-ink-secondary font-medium">
-                  Node Day Buckets ({mapping.constellation.name})
+                  Date windows across {mapping.constellation.name}
                 </span>
                 <span className="font-mono text-ink-muted">
-                  Active node highlighted
+                  Matching star highlighted
                 </span>
               </div>
 
@@ -178,7 +171,7 @@ export default function DateMappingSimulator() {
                     >
                       <div className="flex items-center justify-between font-mono text-xs mb-1">
                         <span className={isTarget ? "text-cyan-glow font-bold" : "text-ink-primary"}>
-                          Node {String(bucket.nodeIndex + 1).padStart(2, "0")}
+                          Star {String(bucket.nodeIndex + 1).padStart(2, "0")}
                         </span>
                         <span>{bucket.days}d</span>
                       </div>

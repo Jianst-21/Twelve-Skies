@@ -32,11 +32,11 @@ export default function ConstellationLedger() {
       <div className="relative z-20 max-w-7xl mx-auto px-5 sm:px-8">
         <div className="max-w-2xl mb-10">
           <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-ink-primary mb-3">
-            The Twelve Astronomical Houses
+            Twelve Constellations Through the Year
           </h2>
           <p className="text-base text-ink-secondary leading-relaxed">
-            Every house carries its own 3D star coordinates, calendar span, and calibrated
-            spectral hue designed to stay legible against dark space.
+            Each constellation reflects its real night-sky geometry and calendar season, giving
+            every chapter of your year a distinct place to return to.
           </p>
         </div>
 
@@ -45,8 +45,8 @@ export default function ConstellationLedger() {
           <div className="lg:col-span-7 rounded-xl border border-white/15 bg-black/60 overflow-hidden">
             <div className="px-4 py-3 border-b border-white/10 grid grid-cols-12 text-xs text-ink-muted font-medium">
               <div className="col-span-5">Constellation</div>
-              <div className="col-span-5 sm:col-span-4">Calendar Span</div>
-              <div className="col-span-2 sm:col-span-3 text-right">Nodes</div>
+              <div className="col-span-5 sm:col-span-4">Calendar Dates</div>
+              <div className="col-span-2 sm:col-span-3 text-right">Stars</div>
             </div>
 
             <div role="listbox" aria-label="Twelve zodiac constellations">
@@ -83,7 +83,7 @@ export default function ConstellationLedger() {
                     </div>
                     <div className="col-span-2 sm:col-span-3 font-mono text-xs text-right text-ink-primary whitespace-nowrap">
                       <span className="sm:hidden">{c.nodes.length}</span>
-                      <span className="hidden sm:inline">{c.nodes.length} nodes</span>
+                      <span className="hidden sm:inline">{c.nodes.length} stars</span>
                     </div>
                   </button>
                 );
@@ -159,13 +159,23 @@ export default function ConstellationLedger() {
               </svg>
             </div>
 
-            {/* Bucket Sequence Summary */}
+            {/* Star Date Windows Summary */}
             <div className="text-xs text-ink-secondary mb-5">
               <div className="font-medium text-ink-primary mb-2">
-                Proportional day allocation across {active.nodes.length} nodes:
+                Memory date windows across {active.nodes.length} stars:
               </div>
-              <div className="font-mono text-cyan-glow">
-                {buckets.map((b) => `${b.days}d`).join(" / ")}
+              <div className="flex flex-wrap gap-1.5 font-mono text-[11px]">
+                {buckets.map((b) => (
+                  <span
+                    key={b.nodeIndex}
+                    className="px-2 py-1 rounded border border-white/10 bg-black/45 text-ink-secondary"
+                  >
+                    <span className="text-cyan-glow">
+                      {String(b.nodeIndex + 1).padStart(2, "0")}
+                    </span>{" "}
+                    {b.formattedRange}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -173,7 +183,7 @@ export default function ConstellationLedger() {
               href="/sky"
               className="min-h-[44px] w-full inline-flex items-center justify-center rounded-lg bg-cyan-glow text-space-navy font-bold text-sm hover:bg-white transition-colors"
             >
-              Navigate {active.name} in 3D Sky
+              Explore {active.name} in 3D Sky
             </Link>
           </div>
         </div>

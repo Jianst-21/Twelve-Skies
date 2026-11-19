@@ -139,8 +139,8 @@ export function generateSpectralStarfield(
   const sizes = new Float32Array(count);
   const phases = new Float32Array(count);
 
-  // Tilted galactic basis
-  const gNormal = normalizeVec3([0.28, 0.72, -0.63]);
+  // Tilted Milky Way galactic basis aligned with J2000 North Galactic Pole
+  const gNormal = normalizeVec3([-0.868, 0.456, 0.197]);
   const gTangentA = normalizeVec3(crossVec3(gNormal, [0, 1, 0]));
   const gTangentB = normalizeVec3(crossVec3(gNormal, gTangentA));
 

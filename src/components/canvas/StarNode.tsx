@@ -59,9 +59,9 @@ const STAR_FRAGMENT_SHADER = /* glsl */ `
     float spikeV = exp(-abs(uv.x) * spikeWidth) * exp(-abs(uv.y) * spikeLength);
     float spikes = (spikeH + spikeV) * (0.65 + uConstellationActive * 0.25 + uHighlight * 0.55) * edgeFade;
 
-    // Subtle memory beacon ring for populated star nodes
-    float pulse = 1.0 + 0.08 * sin(uTime * 2.2);
-    float memoryRing = exp(-pow((dist - 0.36 * pulse) * 26.0, 2.0)) * uHasMemories * (0.45 + 0.25 * uConstellationActive);
+    // Subtle memory beacon ring for populated star nodes (clearly marks stars with photos)
+    float pulse = 1.0 + 0.05 * sin(uTime * 1.8);
+    float memoryRing = exp(-pow((dist - 0.38 * pulse) * 24.0, 2.0)) * uHasMemories * (0.72 + 0.28 * uConstellationActive);
 
     // Rotating dashed reticle ring when node is actively selected
     float angle = atan(uv.y, uv.x) - uTime * 0.55;
@@ -79,6 +79,39 @@ const STAR_FRAGMENT_SHADER = /* glsl */ `
     gl_FragColor = vec4(color, alpha);
   }
 `;
+
+function HoverMemoryThumb({
+  src,
+  alt,
+  glowColor,
+}: {
+  src: string;
+  alt: string;
+  glowColor: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <div
+      className="w-[88px] h-[88px] rounded-full overflow-hidden border-2 p-0.5 bg-space-abyss/95 shadow-[0_0_24px_rgba(124,222,228,0.45)] flex items-center justify-center"
+      style={{ borderColor: glowColor }}
+    >
+      {failed ? (
+        <span className="text-[10px] font-mono text-ink-secondary text-center px-2 leading-tight">
+          Photo saved
+        </span>
+      ) : (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={src}
+          alt={alt}
+          onError={() => setFailed(true)}
+          className="w-full h-full object-cover rounded-full"
+        />
+      )}
+    </div>
+  );
+}
 
 export default function StarNode({
   position,
@@ -181,7 +214,7 @@ export default function StarNode({
         />
       </mesh>
 
-      {/* Generous invisible 3D raycast sphere for effortless hover & click */}
+      {/* Generous invisible 3D raycast sphere sized to avoid overlapping neighbor stars */}
       <mesh
         aria-label={`${constellationId} star node ${nodeIndex + 1}`}
         onPointerOver={handlePointerOver}
@@ -191,39 +224,37 @@ export default function StarNode({
           onSelect(nodeIndex);
         }}
       >
-        <sphereGeometry args={[1.45, 12, 12]} />
+        <sphereGeometry args={[1.05, 14, 14]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {/* Mount inspection lens HTML ONLY for the hovered star node */}
+      {/* Mount crisp screen-space inspection lens HTML for the hovered star node */}
       {isHovered && (
-        <Html center distanceFactor={28} zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
+        <Html center zIndexRange={[40, 20]} style={{ pointerEvents: "none" }}>
           {latestMemory ? (
-            <div className="-translate-y-16 flex flex-col items-center pointer-events-none select-none animate-radial-preview">
-              <div
-                className="w-[76px] h-[76px] rounded-full overflow-hidden border-2 p-0.5 bg-space-abyss/90 shadow-[0_0_20px_rgba(124,222,228,0.45)]"
-                style={{ borderColor: glowColor }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={latestMemory.imageUrl}
-                  alt={latestMemory.caption}
-                  className="w-full h-full object-cover rounded-full"
-                />
-              </div>
+            <div className="-translate-y-20 flex flex-col items-center pointer-events-none select-none animate-radial-preview">
+              <HoverMemoryThumb
+                key={latestMemory.imageUrl}
+                src={latestMemory.imageUrl}
+                alt={latestMemory.caption}
+                glowColor={glowColor}
+              />
 
-              <div className="mt-1.5 px-2.5 py-1 rounded-md bg-space-abyss/90 border border-cyan-glow/35 text-xs font-mono text-ink-primary whitespace-nowrap">
-                <span>{dateRangeText}</span>
-                <span className="text-cyan-glow ml-1.5 font-semibold">
-                  ({memories.length} {memories.length === 1 ? "photo" : "photos"})
-                </span>
+              <div className="mt-2 px-3 py-1.5 rounded-lg bg-space-abyss/95 border border-cyan-glow/40 text-xs text-ink-primary whitespace-nowrap max-w-[220px] text-center">
+                <div className="font-medium truncate">{latestMemory.caption}</div>
+                <div className="font-mono text-[11px] text-ink-secondary mt-0.5">
+                  <span>{dateRangeText}</span>
+                  <span className="text-cyan-glow ml-1.5 font-semibold">
+                    ({memories.length} {memories.length === 1 ? "photo" : "photos"})
+                  </span>
+                </div>
               </div>
             </div>
           ) : (
-            <div className="-translate-y-10 px-2.5 py-1 rounded-md bg-space-abyss/90 border border-white/20 text-xs font-mono text-ink-primary whitespace-nowrap pointer-events-none select-none">
-              <span>Node {String(nodeIndex + 1).padStart(2, "0")}</span>
+            <div className="-translate-y-10 px-2.5 py-1 rounded-md bg-space-abyss/95 border border-white/20 text-xs font-mono text-ink-primary whitespace-nowrap pointer-events-none select-none">
+              <span>Star {String(nodeIndex + 1).padStart(2, "0")}</span>
               <span className="text-ink-secondary ml-1.5">{dateRangeText}</span>
-              <span className="text-ink-muted ml-1.5">(Empty)</span>
+              <span className="text-ink-muted ml-1.5">Click to add</span>
             </div>
           )}
         </Html>
