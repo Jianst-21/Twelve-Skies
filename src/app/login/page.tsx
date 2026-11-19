@@ -199,7 +199,7 @@ export default function LoginPage() {
                   </h1>
                   <p className="text-sm text-ink-secondary mt-1.5 leading-relaxed">
                     {isSignUp
-                      ? "Start archiving personal photographs inside your private 3D dome."
+                      ? "Open your private 3D constellation vault."
                       : "Return to your private constellation gallery."}
                   </p>
                 </div>
