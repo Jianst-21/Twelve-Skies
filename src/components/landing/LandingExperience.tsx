@@ -28,30 +28,19 @@ export default function LandingExperience() {
   const [focusedConstellationId, setFocusedConstellationId] = useState<string>(
     DEFAULT_SAMPLE.constellationId
   );
-  const [focusedNodeIndex, setFocusedNodeIndex] = useState<number | null>(
-    DEFAULT_SAMPLE.nodeIndex
-  );
-  const [activeSampleId, setActiveSampleId] = useState<string>(DEFAULT_SAMPLE.id);
+  const [focusedNodeIndex, setFocusedNodeIndex] = useState<number | null>(null);
   const [lockScrollDrift, setLockScrollDrift] = useState<boolean>(false);
 
-  const handleSelectSample = (sampleId: string) => {
-    const sample = ILLUSTRATIVE_MEMORIES.find((m) => m.id === sampleId);
-    if (!sample) return;
-    setActiveSampleId(sample.id);
-    setFocusedConstellationId(sample.constellationId);
-    setFocusedNodeIndex(sample.nodeIndex);
+  const handleSelectConstellation = (constellationId: string) => {
+    setFocusedConstellationId(constellationId);
+    setFocusedNodeIndex(null);
     setLockScrollDrift(false);
   };
 
   const handleSelectStarNode = (constellationId: string, nodeIndex: number) => {
     setFocusedConstellationId(constellationId);
     setFocusedNodeIndex(nodeIndex);
-    const matchingSample = ILLUSTRATIVE_MEMORIES.find(
-      (m) => m.constellationId === constellationId && m.nodeIndex === nodeIndex
-    );
-    if (matchingSample) {
-      setActiveSampleId(matchingSample.id);
-    }
+    setLockScrollDrift(false);
   };
 
   const handleDateMapped = (constellationId: string, nodeIndex: number) => {
@@ -82,8 +71,7 @@ export default function LandingExperience() {
         <HeroSkySection
           activeConstellationId={focusedConstellationId}
           activeNodeIndex={focusedNodeIndex}
-          activeSampleId={activeSampleId}
-          onSelectSample={handleSelectSample}
+          onSelectConstellation={handleSelectConstellation}
         />
         <CapabilitiesSection onDateMapped={handleDateMapped} />
         <SanctuaryClosing />

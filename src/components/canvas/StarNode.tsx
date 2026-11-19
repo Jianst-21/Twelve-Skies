@@ -36,10 +36,9 @@ const STAR_FRAGMENT_SHADER = /* glsl */ `
   varying vec2 vUv;
   uniform vec3 uGlowColor;
   uniform float uHighlight;
-  uniform float uSelected;
+  uniform float uHovered;
   uniform float uHasMemories;
   uniform float uConstellationActive;
-  uniform float uTime;
 
   void main() {
     vec2 uv = vUv * 2.0 - 1.0;
@@ -49,32 +48,26 @@ const STAR_FRAGMENT_SHADER = /* glsl */ `
     // Smooth boundary fade so diffraction spikes never clip at quad edges
     float edgeFade = smoothstep(1.0, 0.25, dist);
 
-    // Intense white core + colored astronomical corona
-    float core = exp(-dist * 11.5);
-    float corona = exp(-dist * 4.4) * (0.42 + uConstellationActive * 0.22 + uHighlight * 0.45);
+    // Intense white core + colored astronomical corona (brighter when holding memories)
+    float core = exp(-dist * 11.5) * (1.0 + uHasMemories * 0.18);
+    float corona = exp(-dist * 4.4) * (0.42 + uConstellationActive * 0.22 + uHasMemories * 0.18 + uHighlight * 0.42);
 
     // 4-point astronomical diffraction spikes
     float spikeWidth = mix(26.0, 20.0, uHighlight);
     float spikeLength = mix(3.8, 2.7, uHighlight);
     float spikeH = exp(-abs(uv.y) * spikeWidth) * exp(-abs(uv.x) * spikeLength);
     float spikeV = exp(-abs(uv.x) * spikeWidth) * exp(-abs(uv.y) * spikeLength);
-    float spikes = (spikeH + spikeV) * (0.65 + uConstellationActive * 0.25 + uHighlight * 0.55) * edgeFade;
+    float spikes = (spikeH + spikeV) * (0.65 + uConstellationActive * 0.25 + uHasMemories * 0.15 + uHighlight * 0.5) * edgeFade;
 
-    // Subtle memory beacon ring for populated star nodes (clearly marks stars with photos)
-    float pulse = 1.0 + 0.05 * sin(uTime * 1.8);
-    float memoryRing = exp(-pow((dist - 0.38 * pulse) * 24.0, 2.0)) * uHasMemories * (0.72 + 0.28 * uConstellationActive);
-
-    // Rotating dashed reticle ring when node is actively selected
-    float angle = atan(uv.y, uv.x) - uTime * 0.55;
-    float dash = smoothstep(-0.1, 0.2, sin(angle * 8.0));
-    float selectRing = exp(-pow((dist - 0.58) * 28.0, 2.0)) * dash * uSelected * 0.95;
+    // Clean solid ring appears strictly on hover (no dashed reticle, no resting rings)
+    float hoverRing = exp(-pow((dist - 0.44) * 26.0, 2.0)) * uHovered * 0.85;
 
     float dimFactor = mix(0.55, 1.0, max(uConstellationActive, uHighlight));
     vec3 color =
       vec3(1.0) * (core * 1.35 + spikes * 0.5) * dimFactor +
-      uGlowColor * (corona + spikes * 0.72 + memoryRing + selectRing);
+      uGlowColor * (corona + spikes * 0.72 + hoverRing);
 
-    float alpha = clamp((core + corona + spikes + memoryRing + selectRing) * edgeFade, 0.0, 1.0);
+    float alpha = clamp((core + corona + spikes + hoverRing) * edgeFade, 0.0, 1.0);
     if (alpha < 0.01) discard;
 
     gl_FragColor = vec4(color, alpha);
@@ -132,7 +125,7 @@ export default function StarNode({
   const exitTimerRef = useRef<number | null>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const highlightRef = useRef(0);
-  const selectedRef = useRef(0);
+  const hoveredRef = useRef(0);
   const scaleRef = useRef(2.8);
   const activeRef = useRef(isConstellationActive ? 1 : 0);
 
@@ -144,10 +137,9 @@ export default function StarNode({
       uGlowColor: { value: new THREE.Color(glowColor) },
       uScale: { value: 2.8 },
       uHighlight: { value: 0 },
-      uSelected: { value: 0 },
+      uHovered: { value: 0 },
       uHasMemories: { value: 0 },
       uConstellationActive: { value: 0 },
-      uTime: { value: 0 },
     }),
     [glowColor]
   );
@@ -161,13 +153,13 @@ export default function StarNode({
     };
   }, []);
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     const mat = materialRef.current;
     if (!mat) return;
 
     const dt = Math.min(delta, 0.05);
     const targetHighlight = isHovered || isSelected ? 1 : 0;
-    const targetSelected = isSelected ? 1 : 0;
+    const targetHovered = isHovered ? 1 : 0;
     const targetActive = isConstellationActive ? 1 : 0;
     const targetScale =
       isHovered || isSelected
@@ -179,16 +171,15 @@ export default function StarNode({
         : 2.35;
 
     highlightRef.current = THREE.MathUtils.damp(highlightRef.current, targetHighlight, 10, dt);
-    selectedRef.current = THREE.MathUtils.damp(selectedRef.current, targetSelected, 10, dt);
+    hoveredRef.current = THREE.MathUtils.damp(hoveredRef.current, targetHovered, 10, dt);
     activeRef.current = THREE.MathUtils.damp(activeRef.current, targetActive, 7, dt);
     scaleRef.current = THREE.MathUtils.damp(scaleRef.current, targetScale, 10, dt);
 
     mat.uniforms.uHighlight.value = highlightRef.current;
-    mat.uniforms.uSelected.value = selectedRef.current;
+    mat.uniforms.uHovered.value = hoveredRef.current;
     mat.uniforms.uHasMemories.value = hasMemories ? 1 : 0;
     mat.uniforms.uConstellationActive.value = activeRef.current;
     mat.uniforms.uScale.value = scaleRef.current;
-    mat.uniforms.uTime.value = state.clock.elapsedTime;
   });
 
   const handlePointerOver = (e: { stopPropagation: () => void }) => {

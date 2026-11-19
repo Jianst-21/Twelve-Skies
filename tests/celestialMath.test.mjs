@@ -275,6 +275,7 @@ test("computeLandingCameraDirection frames constellation cleanly and applies bou
   // Negative horizontalShiftTan shifts camera look left so constellation sits in right open sky
   const rightFramed = computeLandingCameraDirection(center, null, {
     horizontalShiftTan: -0.26,
+    verticalShiftTan: -0.09,
     scrollProgress: 0,
   });
   const rightLen = Math.hypot(rightFramed[0], rightFramed[1], rightFramed[2]);
@@ -282,6 +283,10 @@ test("computeLandingCameraDirection frames constellation cleanly and applies bou
   assert.ok(
     rightFramed[2] < -0.15,
     `Expected look direction shifted left (-z for +x forward), got z=${rightFramed[2]}`
+  );
+  assert.ok(
+    rightFramed[1] < -0.05,
+    `Expected look direction shifted down (-y) to lift constellation above card, got y=${rightFramed[1]}`
   );
 
   // Scroll drift smoothly rotates within bounded angle and clamps out-of-range scrollProgress

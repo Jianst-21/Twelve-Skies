@@ -56,10 +56,11 @@ function LandingCameraRig({
     const rawProgress = Math.max(0, Math.min(1, window.scrollY / maxScroll));
     const isDesktop = window.innerWidth >= 1024;
 
-    // Frame the active constellation in the open right sky on desktop hero;
-    // ease back toward center as the user scrolls down the page.
+    // Frame the active constellation in the open upper-right sky on desktop hero
+    // so it stays clear of both the left headline and bottom-right sample card.
     const heroWeight = Math.max(0, 1 - rawProgress * 2.6);
     const horizontalShiftTan = isDesktop ? -0.26 * heroWeight : 0;
+    const verticalShiftTan = isDesktop ? -0.1 * heroWeight : 0;
 
     const effectiveScroll =
       reducedMotionRef.current || lockScrollDrift ? 0 : rawProgress;
@@ -74,6 +75,7 @@ function LandingCameraRig({
       nodePos,
       {
         horizontalShiftTan,
+        verticalShiftTan,
         scrollProgress: effectiveScroll,
         maxYawRad: 0.28,
         maxPitchRad: 0.08,
@@ -170,9 +172,10 @@ export default function LandingSkyBackdrop({
   const initialCamPos = useMemo<[number, number, number]>(() => {
     const startConstellation =
       DOME_CONSTELLATION_MAP[focusedConstellationId] ?? DOME_CONSTELLATIONS[0];
+    const isDesktop = typeof window !== "undefined" && window.innerWidth >= 1024;
     const dir = computeLandingCameraDirection(startConstellation.center, null, {
-      horizontalShiftTan:
-        typeof window !== "undefined" && window.innerWidth >= 1024 ? -0.26 : 0,
+      horizontalShiftTan: isDesktop ? -0.26 : 0,
+      verticalShiftTan: isDesktop ? -0.1 : 0,
       scrollProgress: 0,
     });
     return [

@@ -443,6 +443,7 @@ export function computeTargetDirection(
 
 export interface LandingCameraOptions {
   horizontalShiftTan?: number;
+  verticalShiftTan?: number;
   scrollProgress?: number;
   maxYawRad?: number;
   maxPitchRad?: number;
@@ -450,8 +451,9 @@ export interface LandingCameraOptions {
 
 /**
  * Computes a normalized look direction for the landing page 3D dome camera:
- * frames the target constellation with an optional horizontal shift (negative
- * places the constellation in the right half of desktop viewports) and applies
+ * frames the target constellation with optional horizontal/vertical shifts
+ * (negative horizontal places the constellation in the right half of desktop
+ * viewports; negative vertical lifts it clear of lower overlays) and applies
  * a bounded, smooth spherical drift as the visitor scrolls down the page.
  */
 export function computeLandingCameraDirection(
@@ -460,11 +462,20 @@ export function computeLandingCameraDirection(
   options: LandingCameraOptions = {}
 ): Vec3 {
   const horizontalShiftTan = options.horizontalShiftTan ?? 0;
+  const verticalShiftTan = options.verticalShiftTan ?? 0;
   const clampedScroll = Math.max(0, Math.min(1, options.scrollProgress ?? 0));
   const maxYawRad = options.maxYawRad ?? 0.34;
   const maxPitchRad = options.maxPitchRad ?? 0.12;
 
-  const base = computeTargetDirection(center, nodePos, horizontalShiftTan);
+  let base = computeTargetDirection(center, nodePos, horizontalShiftTan);
+  if (Math.abs(verticalShiftTan) >= 1e-6) {
+    const vBasis = buildTangentBasis(base);
+    base = normalizeVec3([
+      base[0] + vBasis.up[0] * verticalShiftTan,
+      base[1] + vBasis.up[1] * verticalShiftTan,
+      base[2] + vBasis.up[2] * verticalShiftTan,
+    ]);
+  }
   if (clampedScroll === 0) {
     return base;
   }
