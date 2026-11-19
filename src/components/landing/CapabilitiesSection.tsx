@@ -19,6 +19,19 @@ const JOURNAL_SLIDES = [
   ILLUSTRATIVE_MEMORIES[4], // Altyn-Emel (Sagittarius)
 ];
 
+function getLocalTodayIso(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+const EDITORIAL_SCRIM_STYLE = {
+  background:
+    "radial-gradient(ellipse at center, rgba(0, 0, 0, 0.86) 35%, rgba(0, 0, 0, 0.55) 70%, transparent 100%)",
+};
+
 interface CapabilitiesSectionProps {
   onDateMapped: (constellationId: string, nodeIndex: number) => void;
 }
@@ -27,6 +40,7 @@ export default function CapabilitiesSection({
   onDateMapped,
 }: CapabilitiesSectionProps) {
   const [dateInput, setDateInput] = useState<string>("2025-08-14");
+  const [todayIso, setTodayIso] = useState<string | null>(null);
   const [slideIdx, setSlideIdx] = useState<number>(0);
 
   const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(dateInput);
@@ -49,6 +63,14 @@ export default function CapabilitiesSection({
     }
   };
 
+  const handleSelectToday = () => {
+    const today = getLocalTodayIso();
+    setTodayIso(today);
+    handleDateChange(today);
+  };
+
+  const isTodaySelected = todayIso !== null && dateInput === todayIso;
+
   const currentSlide = JOURNAL_SLIDES[slideIdx] || JOURNAL_SLIDES[0];
   const hoverSample = ILLUSTRATIVE_MEMORIES[0]; // Tromso Aurora (Capricorn)
   const indexSamples = [ILLUSTRATIVE_MEMORIES[3], ILLUSTRATIVE_MEMORIES[2]];
@@ -61,7 +83,12 @@ export default function CapabilitiesSection({
     >
       <div className="max-w-7xl mx-auto px-5 sm:px-8 space-y-20 sm:space-y-28 lg:space-y-32">
         {/* Section Intro */}
-        <div className="max-w-2xl pointer-events-auto rounded-xl bg-space-black/88 px-6 py-5 sm:px-7 sm:py-6 border border-white/12">
+        <div className="relative isolate max-w-2xl pointer-events-auto py-2">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-x-4 sm:-inset-x-8 -inset-y-6 -z-10"
+            style={EDITORIAL_SCRIM_STYLE}
+          />
           <h2
             id="capabilities-heading"
             className="font-display text-3xl sm:text-4xl font-bold tracking-[-0.02em] text-ink-primary leading-tight mb-3"
@@ -76,7 +103,12 @@ export default function CapabilitiesSection({
 
         {/* Capability 1: Place a memory by date (live 3D sky sync) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          <div className="lg:col-span-5 pointer-events-auto rounded-xl bg-space-black/90 p-6 sm:p-7 border border-white/12">
+          <div className="relative isolate lg:col-span-5 pointer-events-auto py-2">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-x-4 sm:-inset-x-8 -inset-y-6 -z-10"
+              style={EDITORIAL_SCRIM_STYLE}
+            />
             <h3 className="font-display text-2xl sm:text-3xl font-bold tracking-[-0.02em] text-ink-primary leading-snug mb-3">
               Pick a date, light its star
             </h3>
@@ -89,79 +121,106 @@ export default function CapabilitiesSection({
           </div>
 
           <div className="lg:col-span-7 pointer-events-auto rounded-xl border border-white/15 bg-space-abyss/92 p-5 sm:p-7">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-              <div className="md:col-span-6">
-                <label
-                  htmlFor="landing-date-input"
-                  className="block text-sm font-medium text-ink-primary mb-2"
-                >
-                  Test any memory date
-                </label>
-                <input
-                  id="landing-date-input"
-                  type="date"
-                  value={dateInput}
-                  onChange={(e) => handleDateChange(e.target.value)}
-                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-lg bg-space-black/85 border border-cyan-glow/35 text-ink-primary font-mono text-sm focus:border-cyan-glow"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+              <div className="md:col-span-6 flex flex-col justify-between">
+                <div>
+                  <label
+                    htmlFor="landing-date-input"
+                    className="block text-sm font-medium text-ink-primary mb-1"
+                  >
+                    Test any memory date
+                  </label>
+                  <p
+                    id="landing-date-hint"
+                    className="text-xs text-ink-secondary mb-3"
+                  >
+                    Pick any calendar day to preview its constellation and star.
+                  </p>
+                  <input
+                    id="landing-date-input"
+                    type="date"
+                    aria-describedby="landing-date-hint"
+                    value={dateInput}
+                    onChange={(e) => handleDateChange(e.target.value)}
+                    className="w-full min-h-[44px] px-3.5 py-2.5 rounded-lg bg-space-black/85 border border-cyan-glow/40 text-ink-primary font-mono text-sm hover:border-cyan-glow/75 focus:border-cyan-glow transition-colors [color-scheme:dark]"
+                  />
+                </div>
 
-                <div className="flex flex-wrap gap-2 mt-3.5">
-                  {QUICK_DATES.map((preset) => {
-                    const isSelected = dateInput === preset.iso;
-                    return (
-                      <button
-                        key={preset.iso}
-                        type="button"
-                        onClick={() => handleDateChange(preset.iso)}
-                        className={`min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-mono border transition-colors ${
-                          isSelected
-                            ? "border-cyan-glow bg-cyan-glow/15 text-cyan-glow font-semibold"
-                            : "border-white/15 bg-space-black/50 text-ink-secondary hover:border-white/35 hover:text-ink-primary"
-                        }`}
-                      >
-                        {preset.label}
-                      </button>
-                    );
-                  })}
+                <div className="mt-4 pt-3.5 border-t border-white/10">
+                  <p className="text-xs text-ink-secondary mb-2">
+                    Or jump to a sample date
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {QUICK_DATES.map((preset) => {
+                      const isSelected = dateInput === preset.iso;
+                      return (
+                        <button
+                          key={preset.iso}
+                          type="button"
+                          onClick={() => handleDateChange(preset.iso)}
+                          className={`min-h-[44px] px-3 py-2 rounded-lg text-xs font-mono border transition-colors ${
+                            isSelected
+                              ? "border-cyan-glow bg-cyan-glow/15 text-cyan-glow font-semibold"
+                              : "border-white/15 bg-space-black/50 text-ink-secondary hover:border-white/35 hover:text-ink-primary"
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={handleSelectToday}
+                      className={`min-h-[44px] px-3 py-2 rounded-lg text-xs font-mono border transition-colors ${
+                        isTodaySelected
+                          ? "border-cyan-glow bg-cyan-glow/15 text-cyan-glow font-semibold"
+                          : "border-white/15 bg-space-black/50 text-ink-secondary hover:border-white/35 hover:text-ink-primary"
+                      }`}
+                    >
+                      Today
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="md:col-span-6 rounded-lg border border-white/10 bg-space-black/70 p-4 sm:p-5">
+              <div className="md:col-span-6 rounded-lg border border-white/10 bg-space-black/70 p-4 sm:p-5 flex flex-col justify-between">
                 {mapping ? (
                   <>
-                    <div className="flex items-center gap-3 mb-3">
-                      <span
-                        className="w-10 h-10 rounded-lg border flex items-center justify-center shrink-0"
-                        style={{
-                          borderColor: `${mapping.constellation.glowColor}66`,
-                          backgroundColor: `${mapping.constellation.glowColor}14`,
-                          color: mapping.constellation.glowColor,
-                        }}
-                        aria-hidden="true"
-                      >
-                        <ZodiacGlyph id={mapping.constellation.id} size={20} />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="font-display text-xl font-bold text-ink-primary truncate">
-                          {mapping.constellation.name}
-                        </div>
-                        <div className="font-mono text-xs text-ink-secondary">
-                          {mapping.constellation.periodText}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-white/10 space-y-1.5 font-mono text-xs">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-ink-secondary">Assigned star</span>
-                        <span className="text-cyan-glow font-semibold">
-                          Star {String(mapping.nodeIndex + 1).padStart(2, "0")} of{" "}
-                          {String(mapping.totalNodes).padStart(2, "0")}
+                    <div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <span
+                          className="w-10 h-10 rounded-lg border flex items-center justify-center shrink-0"
+                          style={{
+                            borderColor: `${mapping.constellation.glowColor}66`,
+                            backgroundColor: `${mapping.constellation.glowColor}14`,
+                            color: mapping.constellation.glowColor,
+                          }}
+                          aria-hidden="true"
+                        >
+                          <ZodiacGlyph id={mapping.constellation.id} size={20} />
                         </span>
+                        <div className="min-w-0">
+                          <div className="font-display text-xl font-bold text-ink-primary truncate">
+                            {mapping.constellation.name}
+                          </div>
+                          <div className="font-mono text-xs text-ink-secondary">
+                            {mapping.constellation.periodText}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-ink-secondary">Star date window</span>
-                        <span className="text-ink-primary">{mapping.formattedRange}</span>
+
+                      <div className="pt-3 border-t border-white/10 space-y-1.5 font-mono text-xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-ink-secondary">Assigned star</span>
+                          <span className="text-cyan-glow font-semibold">
+                            Star {String(mapping.nodeIndex + 1).padStart(2, "0")} of{" "}
+                            {String(mapping.totalNodes).padStart(2, "0")}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-ink-secondary">Star date window</span>
+                          <span className="text-ink-primary">{mapping.formattedRange}</span>
+                        </div>
                       </div>
                     </div>
 
@@ -269,11 +328,16 @@ export default function CapabilitiesSection({
             </div>
           </div>
 
-          <div className="lg:col-span-6 order-1 lg:order-2 pointer-events-auto rounded-xl bg-space-black/90 p-6 sm:p-7 border border-white/12">
+          <div className="relative isolate lg:col-span-6 order-1 lg:order-2 pointer-events-auto py-2">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-x-4 sm:-inset-x-8 -inset-y-6 -z-10"
+              style={EDITORIAL_SCRIM_STYLE}
+            />
             <h3 className="font-display text-2xl sm:text-3xl font-bold tracking-[-0.02em] text-ink-primary leading-snug mb-3">
               Orbit 360 degrees and glimpse memories on hover
             </h3>
-            <p className="text-base text-ink-secondary leading-relaxed mb-4">
+            <p className="text-base text-ink-secondary leading-relaxed mb-5">
               Drag freely around twelve zodiac constellations arranged across upper,
               equatorial, and lower night skies. Hover any populated star to see its
               photograph bloom directly from the star core, or open the chronological
@@ -281,7 +345,7 @@ export default function CapabilitiesSection({
             </p>
             <Link
               href="/sky"
-              className="min-h-[44px] px-5 inline-flex items-center justify-center rounded-lg border border-cyan-glow/50 text-cyan-glow text-sm font-semibold hover:bg-cyan-glow hover:text-space-navy transition-colors"
+              className="min-h-[44px] px-5 inline-flex items-center justify-center rounded-lg border border-cyan-glow/50 bg-space-black/60 text-cyan-glow text-sm font-semibold hover:bg-cyan-glow hover:text-space-navy transition-colors"
             >
               Launch 3D Dome
             </Link>
@@ -290,7 +354,12 @@ export default function CapabilitiesSection({
 
         {/* Capability 3: Open any star's split-view memory journal */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          <div className="lg:col-span-5 pointer-events-auto rounded-xl bg-space-black/90 p-6 sm:p-7 border border-white/12">
+          <div className="relative isolate lg:col-span-5 pointer-events-auto py-2">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-x-4 sm:-inset-x-8 -inset-y-6 -z-10"
+              style={EDITORIAL_SCRIM_STYLE}
+            />
             <h3 className="font-display text-2xl sm:text-3xl font-bold tracking-[-0.02em] text-ink-primary leading-snug mb-3">
               Read and edit inside the split-view journal
             </h3>

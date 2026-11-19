@@ -21,6 +21,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --background: #000000;
   --background-abyss: #04091e;
   --foreground: #f8fafc;
@@ -57,6 +58,16 @@ button:disabled,
 input:disabled,
 textarea:disabled {
   cursor: not-allowed;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 150ms ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
 }
 
 :focus-visible {
