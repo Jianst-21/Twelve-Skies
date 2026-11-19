@@ -15,6 +15,7 @@ interface StarNodeProps {
   memories?: MemoryItem[];
   isSelected: boolean;
   isConstellationActive: boolean;
+  interactive?: boolean;
   onSelect: (nodeIndex: number) => void;
   onHoverChange?: (hovered: boolean) => void;
 }
@@ -122,6 +123,7 @@ export default function StarNode({
   memories = [],
   isSelected,
   isConstellationActive,
+  interactive = true,
   onSelect,
   onHoverChange,
 }: StarNodeProps) {
@@ -242,18 +244,20 @@ export default function StarNode({
       </mesh>
 
       {/* Generous invisible 3D raycast sphere sized for clean, non-overlapping hover */}
-      <mesh
-        aria-label={`${constellationId} star node ${nodeIndex + 1}`}
-        onPointerOver={handlePointerOver}
-        onPointerOut={handlePointerOut}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect(nodeIndex);
-        }}
-      >
-        <sphereGeometry args={[1.05, 14, 14]} />
-        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-      </mesh>
+      {interactive && (
+        <mesh
+          aria-label={`${constellationId} star node ${nodeIndex + 1}`}
+          onPointerOver={handlePointerOver}
+          onPointerOut={handlePointerOut}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(nodeIndex);
+          }}
+        >
+          <sphereGeometry args={[1.05, 14, 14]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+      )}
 
       {/* Two-way star-origin hover popup (blooms from star core, retracts back into star core) */}
       {isPopupMounted && (

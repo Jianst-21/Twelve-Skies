@@ -4,6 +4,7 @@ import {
   celestialToCartesian,
   computeDomeConstellations,
   computeErgonomicConstellations,
+  computeLandingCameraDirection,
   computeSegmentHitbox,
   generateRealCatalogStarfield,
   getHighlightedLineIndices,
@@ -255,4 +256,56 @@ test("computeSegmentHitbox trims segment endpoints cleanly away from star node s
 
   // Too short to clear both star hitboxes returns null
   assert.equal(computeSegmentHitbox([0, 0, 0], [2.0, 0, 0], 1.15), null);
+});
+
+test("computeLandingCameraDirection frames constellation cleanly and applies bounded scroll drift", () => {
+  const center = [52, 0, 0];
+
+  // Zero offset and zero scroll points directly at normalized center
+  const base = computeLandingCameraDirection(center, null, {
+    horizontalShiftTan: 0,
+    scrollProgress: 0,
+  });
+  const baseLen = Math.hypot(base[0], base[1], base[2]);
+  assert.ok(Math.abs(baseLen - 1) < 1e-6);
+  assert.ok(Math.abs(base[0] - 1) < 1e-6);
+  assert.ok(Math.abs(base[1]) < 1e-6);
+  assert.ok(Math.abs(base[2]) < 1e-6);
+
+  // Negative horizontalShiftTan shifts camera look left so constellation sits in right open sky
+  const rightFramed = computeLandingCameraDirection(center, null, {
+    horizontalShiftTan: -0.26,
+    scrollProgress: 0,
+  });
+  const rightLen = Math.hypot(rightFramed[0], rightFramed[1], rightFramed[2]);
+  assert.ok(Math.abs(rightLen - 1) < 1e-6);
+  assert.ok(
+    rightFramed[2] < -0.15,
+    `Expected look direction shifted left (-z for +x forward), got z=${rightFramed[2]}`
+  );
+
+  // Scroll drift smoothly rotates within bounded angle and clamps out-of-range scrollProgress
+  const drifted = computeLandingCameraDirection(center, null, {
+    horizontalShiftTan: 0,
+    scrollProgress: 0.75,
+    maxYawRad: 0.36,
+    maxPitchRad: 0.14,
+  });
+  const driftedOver = computeLandingCameraDirection(center, null, {
+    horizontalShiftTan: 0,
+    scrollProgress: 4.0,
+    maxYawRad: 0.36,
+    maxPitchRad: 0.14,
+  });
+  const driftedMax = computeLandingCameraDirection(center, null, {
+    horizontalShiftTan: 0,
+    scrollProgress: 1.0,
+    maxYawRad: 0.36,
+    maxPitchRad: 0.14,
+  });
+  assert.ok(Math.abs(Math.hypot(drifted[0], drifted[1], drifted[2]) - 1) < 1e-6);
+  assert.deepEqual(driftedOver, driftedMax);
+  const dot = Math.min(1, Math.max(-1, base[0] * driftedMax[0] + base[1] * driftedMax[1] + base[2] * driftedMax[2]));
+  const driftAngle = Math.acos(dot);
+  assert.ok(driftAngle > 0.1 && driftAngle <= 0.45, `Unexpected drift angle: ${driftAngle}`);
 });

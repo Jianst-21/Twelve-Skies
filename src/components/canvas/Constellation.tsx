@@ -21,6 +21,8 @@ interface ConstellationProps {
   selectedNodeIndex: number | null;
   onSelectConstellation: (constellation: ConstellationData) => void;
   onSelectNode: (nodeIndex: number) => void;
+  showNameplate?: boolean;
+  interactive?: boolean;
 }
 
 const FORWARD_AXIS = new THREE.Vector3(0, 0, -1);
@@ -33,6 +35,8 @@ export default function Constellation({
   selectedNodeIndex,
   onSelectConstellation,
   onSelectNode,
+  showNameplate = true,
+  interactive = true,
 }: ConstellationProps) {
   const [isLabelHovered, setIsLabelHovered] = useState(false);
   const [hoveredNodeIndex, setHoveredNodeIndex] = useState<number | null>(null);
@@ -198,33 +202,34 @@ export default function Constellation({
       )}
 
       {/* Invisible trimmed raycast cylinders so hovering or clicking any line lights the whole constellation */}
-      {segmentHitboxes.map((seg) => (
-        <mesh
-          key={`${constellation.id}-seg-hit-${seg.lineIdx}`}
-          position={seg.midpoint}
-          quaternion={seg.quaternion}
-          onPointerOver={(e) => {
-            e.stopPropagation();
-            setHoveredLineIndex(seg.lineIdx);
-            document.body.style.cursor = "pointer";
-          }}
-          onPointerOut={(e) => {
-            e.stopPropagation();
-            setHoveredLineIndex((curr) => (curr === seg.lineIdx ? null : curr));
-            document.body.style.cursor = "auto";
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelectConstellation(constellation);
-          }}
-        >
-          <cylinderGeometry args={[0.55, 0.55, seg.length, 6, 1, true]} />
-          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-        </mesh>
-      ))}
+      {interactive &&
+        segmentHitboxes.map((seg) => (
+          <mesh
+            key={`${constellation.id}-seg-hit-${seg.lineIdx}`}
+            position={seg.midpoint}
+            quaternion={seg.quaternion}
+            onPointerOver={(e) => {
+              e.stopPropagation();
+              setHoveredLineIndex(seg.lineIdx);
+              document.body.style.cursor = "pointer";
+            }}
+            onPointerOut={(e) => {
+              e.stopPropagation();
+              setHoveredLineIndex((curr) => (curr === seg.lineIdx ? null : curr));
+              document.body.style.cursor = "auto";
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectConstellation(constellation);
+            }}
+          >
+            <cylinderGeometry args={[0.55, 0.55, seg.length, 6, 1, true]} />
+            <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+          </mesh>
+        ))}
 
       {/* Offset Astronomical Nameplate (positioned cleanly below lowest star) */}
-      {isInFront && (
+      {showNameplate && isInFront && (
         <group position={labelPosition}>
           <Html center zIndexRange={[5, 0]}>
             <button
@@ -281,6 +286,7 @@ export default function Constellation({
             memories={nodeMemories}
             isSelected={isNodeSelected}
             isConstellationActive={isActive}
+            interactive={interactive}
             onHoverChange={(hovered) => {
               setHoveredNodeIndex((curr) =>
                 hovered ? idx : curr === idx ? null : curr

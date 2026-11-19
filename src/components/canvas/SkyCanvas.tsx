@@ -5,26 +5,11 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
-import { CONSTELLATIONS } from "@/data/constellations";
 import { ConstellationData, MemoryItem } from "@/types";
 import SpaceDome from "./SpaceDome";
 import Constellation from "./Constellation";
-import {
-  computeDomeConstellations,
-  computeTargetDirection,
-} from "./celestialMath";
-
-const DOME_CONSTELLATIONS = computeDomeConstellations(CONSTELLATIONS, {
-  sphereRadius: 52,
-  waveElevationDeg: 46,
-  minIntraDistance: 4.8,
-});
-
-const DOME_CONSTELLATION_MAP: Record<string, ConstellationData> =
-  DOME_CONSTELLATIONS.reduce((acc, c) => {
-    acc[c.id] = c;
-    return acc;
-  }, {} as Record<string, ConstellationData>);
+import { computeTargetDirection } from "./celestialMath";
+import { DOME_CONSTELLATIONS, DOME_CONSTELLATION_MAP } from "./domeConstellations";
 
 const ORBIT_RADIUS = 0.1;
 const MIN_FOV = 28;

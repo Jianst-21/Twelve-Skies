@@ -1,6 +1,6 @@
 ---
 name: Twelve Skies
-description: Private 3D zodiac photo observatory layered over a deep-space Neowise starfield and pointer-reactive bioluminescent star wakes.
+description: Private 3D zodiac photo observatory built directly over a unified procedural Milky Way SpaceDome and real 3D constellation star shaders.
 colors:
   space-black: "#000000"
   space-abyss: "#04091e"
@@ -64,17 +64,17 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Bioluminescent Starfield Observatory"**
+**Creative North Star: "The Unified 3D Celestial Observatory"**
 
-Twelve Skies pairs the deep-space Neowise starfield backdrop with pointer-reactive bioluminescent cyan star wakes so the night sky remains an active, breathable ground across every route. UI surfaces step back into disciplined midnight-abyss containers ruled by razor-thin cyan hairlines, allowing 4-point sparkle stars, twelve calibrated zodiac hues, and personal photography to lead without visual competition.
+Twelve Skies renders the same procedural WebGL `SpaceDome` (Milky Way galactic plane, 4,200 J2000 spectral catalog stars, and delicate armillary sphere rings) and real 3D `Constellation` + `StarNode` diffraction-spike star shaders across both the landing page (`/`) and the interactive 3D vault (`/sky`). UI surfaces step back into restrained midnight-abyss containers ruled by crisp hairlines, allowing real 3D constellations and personal photography to lead without visual clutter.
 
-We explicitly reject generic SaaS card clutter, glowing gradient orbs, decorative capsule eyebrows above headings, and opaque dark overlays that conceal the background cosmos.
+We explicitly reject tiled starfield JPEGs, alternating CSS section gradients, duplicated 2D zodiac tables, glowing gradient orbs, decorative capsule eyebrows above headings, and opaque walls that conceal the 3D night sky.
 
 **Key Characteristics:**
-- Continuous Neowise cosmic starfield (`#000000` to `#04091e`) augmented by a 60fps pointer-reactive wake canvas (`#7cdee4` / `#38bdf8`).
-- Geometric `Titillium Web` display headings paired with `Manrope` body prose and `JetBrains Mono` reserved strictly for astronomical coordinates, dates, and distribution formulas.
-- Restraint in frosted glass (`backdrop-blur-md` capped to focused inspection lenses, modals, and the split-view memory journal).
-- Twelve spectral constellation colors reserved for astronomical geometry, glyphs, and node beacons.
+- Continuous live 3D `SpaceDome` sky (`#000000` void to subtle `#04091e` ecliptic horizon wash) shared between `/` and `/sky`.
+- Geometric `Titillium Web` display headings paired with `Manrope` body prose and `JetBrains Mono` reserved strictly for astronomical coordinates and dates.
+- Restraint in frosted glass (`backdrop-blur-md` capped to at most 2 focal lenses on `/`, plus floating `/sky` drawers and modals).
+- Twelve spectral constellation colors reserved for astronomical geometry, glyphs, and star beacons.
 
 ## Colors
 
@@ -116,7 +116,7 @@ The active UI palette holds to two dark cosmic grounds, crisp luminous ink, and 
 
 ## Layout
 
-Pages share a `max-w-7xl` (`1280px`) centered container with `px-5 sm:px-8` gutters and `overflow-x: clip` on `html` and `body`. Sections alternate composition cleanly: an asymmetric horizon hero + 12-house meridian strip, a two-column live date-to-star calculator, a 12-row interactive constellation ledger paired with a 2D tangent projection plate, and an asymmetric featured archival plate + companion stack. The `/sky` route occupies `100vw x 100vh` with floating observatory chrome and a `55vw / 45vw` desktop split-view when inspecting a star node.
+Pages share a `max-w-7xl` (`1280px`) centered container with `px-5 sm:px-8` gutters and `overflow-x: clip` on `html` and `body`. The landing page (`/`) opens with an asymmetric open-sky hero framing the live 3D constellation on the right and concise copy plus 3 sample star triggers on the left, followed by three spacious capability demonstrations (live date picker synced to the 3D sky, 360-degree hover bloom and Vault Index preview, interactive split-view journal preview), a quiet private sanctuary closing band, and a single-row footer. The `/sky` route occupies `100vw x 100vh` with floating observatory chrome and a `55vw / 45vw` desktop split-view when inspecting a star node.
 
 ## Elevation & Depth
 

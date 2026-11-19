@@ -441,6 +441,55 @@ export function computeTargetDirection(
   ]);
 }
 
+export interface LandingCameraOptions {
+  horizontalShiftTan?: number;
+  scrollProgress?: number;
+  maxYawRad?: number;
+  maxPitchRad?: number;
+}
+
+/**
+ * Computes a normalized look direction for the landing page 3D dome camera:
+ * frames the target constellation with an optional horizontal shift (negative
+ * places the constellation in the right half of desktop viewports) and applies
+ * a bounded, smooth spherical drift as the visitor scrolls down the page.
+ */
+export function computeLandingCameraDirection(
+  center: Vec3,
+  nodePos: Vec3 | null,
+  options: LandingCameraOptions = {}
+): Vec3 {
+  const horizontalShiftTan = options.horizontalShiftTan ?? 0;
+  const clampedScroll = Math.max(0, Math.min(1, options.scrollProgress ?? 0));
+  const maxYawRad = options.maxYawRad ?? 0.34;
+  const maxPitchRad = options.maxPitchRad ?? 0.12;
+
+  const base = computeTargetDirection(center, nodePos, horizontalShiftTan);
+  if (clampedScroll === 0) {
+    return base;
+  }
+
+  const basis = buildTangentBasis(base);
+  const yaw = clampedScroll * maxYawRad;
+  const pitch = Math.sin(clampedScroll * Math.PI) * maxPitchRad;
+
+  const cosY = Math.cos(yaw);
+  const sinY = Math.sin(yaw);
+  const yawed: Vec3 = [
+    basis.forward[0] * cosY + basis.right[0] * sinY,
+    basis.forward[1] * cosY + basis.right[1] * sinY,
+    basis.forward[2] * cosY + basis.right[2] * sinY,
+  ];
+
+  const cosP = Math.cos(pitch);
+  const sinP = Math.sin(pitch);
+  return normalizeVec3([
+    yawed[0] * cosP + basis.up[0] * sinP,
+    yawed[1] * cosP + basis.up[1] * sinP,
+    yawed[2] * cosP + basis.up[2] * sinP,
+  ]);
+}
+
 /**
  * Places a constellation's nameplate anchor cleanly below its lowest star node
  * on the celestial sphere surface so it never obscures star geometry or lines.
