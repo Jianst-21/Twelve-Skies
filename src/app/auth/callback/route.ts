@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     new URL(
       "/login?error=" +
         encodeURIComponent(
-          "Tautan konfirmasi tidak valid atau telah kedaluwarsa. Silakan masuk atau minta email baru."
+          "Verification link is invalid or has expired. Please sign in or request a new confirmation email."
         ),
       origin
     )

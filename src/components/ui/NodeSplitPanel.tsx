@@ -1,20 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { ConstellationData, MemoryItem } from "@/types";
-import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
 import {
-  X,
-  Plus,
-  MapPin,
   Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Trash2,
-  Edit2,
   Camera,
   Check,
+  ChevronLeft,
+  ChevronRight,
+  Edit2,
+  MapPin,
+  Plus,
+  Trash2,
+  X,
 } from "lucide-react";
+import { ConstellationData, MemoryItem } from "@/types";
+import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
 
 interface NodeSplitPanelProps {
   constellation: ConstellationData;
@@ -39,11 +39,14 @@ export default function NodeSplitPanel({
 }: NodeSplitPanelProps) {
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editCaption, setEditCaption] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const currentSlide = memories.length > 0 ? memories[activeSlideIndex] : null;
+  const safeIndex =
+    memories.length > 0 ? Math.min(activeSlideIndex, memories.length - 1) : 0;
+  const currentSlide = memories.length > 0 ? memories[safeIndex] : null;
 
   const handlePrevSlide = () => {
     setActiveSlideIndex((prev) => (prev - 1 + memories.length) % memories.length);
@@ -54,12 +57,14 @@ export default function NodeSplitPanel({
   };
 
   const startEdit = (memory: MemoryItem) => {
+    setConfirmDeleteId(null);
     setEditingId(memory.id);
     setEditCaption(memory.caption);
     setEditLocation(memory.location || "");
   };
 
   const saveEdit = async (id: string) => {
+    if (!editCaption.trim()) return;
     setIsSubmitting(true);
     try {
       await onUpdateMemory(id, editCaption, editLocation);
@@ -69,31 +74,44 @@ export default function NodeSplitPanel({
     }
   };
 
+  const confirmDelete = async (id: string) => {
+    setIsSubmitting(true);
+    try {
+      await onDeleteMemory(id);
+      setConfirmDeleteId(null);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <aside className="fixed inset-y-0 right-0 z-50 w-full sm:w-[85vw] md:w-[48vw] lg:w-[45vw] bg-space-navy/80 backdrop-blur-2xl border-l border-cyan-glow/30 flex flex-col shadow-[-15px_0_40px_rgba(3,4,94,0.7)] animate-in slide-in-from-right duration-300">
+    <aside
+      aria-label={`${constellation.name} Star Node ${nodeIndex + 1} memories`}
+      className="fixed inset-y-0 right-0 z-50 w-full sm:w-[85vw] md:w-[48vw] lg:w-[45vw] bg-space-abyss/90 backdrop-blur-xl border-l border-cyan-glow/30 flex flex-col animate-panel-slide-in"
+    >
       {/* Top Header */}
-      <div className="p-5 sm:p-6 border-b border-cyan-glow/20 flex items-center justify-between">
+      <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <span className="flex items-center" style={{ color: constellation.glowColor }}>
               <ZodiacGlyph id={constellation.id} size={20} />
             </span>
-            <h2 className="font-display text-lg sm:text-xl font-bold tracking-wider text-white uppercase">
-              {constellation.name} : Titik {nodeIndex + 1}
+            <h2 className="font-display text-lg sm:text-xl font-bold tracking-wider text-ink-primary uppercase">
+              {constellation.name} · Star Node {String(nodeIndex + 1).padStart(2, "0")}
             </h2>
           </div>
-          <p className="text-xs text-nebula-silver mt-0.5">
-            Rentang Waktu:{" "}
-            <span className="text-cyan-glow font-medium">{dateRangeText}</span>
+          <p className="text-xs text-ink-secondary mt-1 font-mono">
+            Date Window: <span className="text-cyan-glow">{dateRangeText}</span>
           </p>
         </div>
 
         <button
           type="button"
           onClick={onClose}
-          className="w-9 h-9 rounded-full bg-white/5 border border-cyan-glow/20 flex items-center justify-center text-nebula-silver hover:text-white hover:border-cyan-glow transition-all"
+          aria-label="Close star node panel"
+          className="min-w-[40px] min-h-[40px] rounded-lg bg-black/50 border border-white/15 flex items-center justify-center text-ink-secondary hover:text-ink-primary hover:border-cyan-glow transition-colors"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5" aria-hidden="true" />
         </button>
       </div>
 
@@ -101,69 +119,67 @@ export default function NodeSplitPanel({
       <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
         {memories.length === 0 ? (
           /* Empty State */
-          <div className="h-full flex flex-col items-center justify-center text-center p-8 border border-dashed border-cyan-glow/20 rounded-[28px] bg-black/20 my-auto">
-            <div className="w-16 h-16 rounded-full bg-cyan-glow/10 border border-cyan-glow/30 text-cyan-glow flex items-center justify-center mb-4">
-              <Camera className="w-8 h-8" />
+          <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-center p-8 border border-dashed border-cyan-glow/25 rounded-xl bg-black/35">
+            <div className="w-14 h-14 rounded-xl bg-cyan-glow/10 border border-cyan-glow/30 text-cyan-glow flex items-center justify-center mb-4">
+              <Camera className="w-7 h-7" aria-hidden="true" />
             </div>
-            <h3 className="font-display text-base sm:text-lg font-bold text-white mb-1">
-              Belum Ada Kenangan di Titik Ini
+            <h3 className="font-display text-lg font-bold text-ink-primary mb-1.5">
+              No Memories Archived at This Star
             </h3>
-            <p className="text-xs sm:text-sm text-nebula-silver max-w-sm mb-6 leading-relaxed">
-              Titik bintang #{nodeIndex + 1} mengarsipkan memori yang diambil pada rentang{" "}
-              <span className="text-cyan-glow">{dateRangeText}</span>.
+            <p className="text-sm text-ink-secondary max-w-sm mb-6 leading-relaxed">
+              Star Node #{nodeIndex + 1} holds photographs captured between{" "}
+              <span className="text-cyan-glow font-mono">{dateRangeText}</span>.
             </p>
             <button
               type="button"
               onClick={() => onOpenUploadForNode(nodeIndex, new Date())}
-              className="px-6 py-3 rounded-full bg-cyan-glow text-space-navy font-bold text-xs uppercase tracking-wider hover:bg-transparent hover:text-white hover:border hover:border-white transition-all shadow-[0_0_20px_rgba(124,222,228,0.3)] flex items-center gap-2"
+              className="min-h-[44px] px-5 py-2.5 rounded-lg bg-cyan-glow text-space-navy font-bold text-sm hover:bg-white transition-colors inline-flex items-center gap-2"
             >
-              <Plus className="w-4 h-4" />
-              <span>Tambah Foto di Titik Ini</span>
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              <span>Add Photo to This Star</span>
             </button>
           </div>
         ) : (
           <>
-            {/* Upper: Interactive Photo Slideshow / Carousel */}
-            <div className="relative rounded-[24px] overflow-hidden border border-cyan-glow/30 bg-black/50 aspect-[16/10] group">
+            {/* Interactive Photo Slideshow */}
+            <div className="relative rounded-xl overflow-hidden border border-cyan-glow/30 bg-black aspect-[16/10] group">
               {currentSlide && (
                 <>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={currentSlide.imageUrl}
                     alt={currentSlide.caption}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-cover"
                   />
-                  {/* Overlay gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30 pointer-events-none" />
 
-                  {/* Counter badge */}
-                  <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-black/60 border border-cyan-glow/30 backdrop-blur-md text-[11px] font-mono text-cyan-glow">
-                    {activeSlideIndex + 1} / {memories.length}
+                  <div className="absolute top-3 right-3 px-2.5 py-1 rounded-md bg-black/75 border border-white/15 text-[11px] font-mono text-cyan-glow">
+                    {safeIndex + 1} / {memories.length}
                   </div>
 
-                  {/* Slideshow Controls */}
                   {memories.length > 1 && (
                     <>
                       <button
                         type="button"
                         onClick={handlePrevSlide}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 border border-white/20 text-white flex items-center justify-center hover:bg-cyan-glow hover:text-space-navy transition-all"
+                        aria-label="Previous photo"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 min-w-[36px] min-h-[36px] rounded-lg bg-black/70 border border-white/20 text-white flex items-center justify-center hover:bg-cyan-glow hover:text-space-navy transition-colors"
                       >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                       </button>
                       <button
                         type="button"
                         onClick={handleNextSlide}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 border border-white/20 text-white flex items-center justify-center hover:bg-cyan-glow hover:text-space-navy transition-all"
+                        aria-label="Next photo"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 min-w-[36px] min-h-[36px] rounded-lg bg-black/70 border border-white/20 text-white flex items-center justify-center hover:bg-cyan-glow hover:text-space-navy transition-colors"
                       >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </>
                   )}
 
-                  {/* Slide caption preview */}
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <p className="text-xs text-white/90 font-medium line-clamp-2">
+                  <div className="absolute bottom-3 left-4 right-4">
+                    <p className="text-xs sm:text-sm text-white/95 font-medium line-clamp-2">
                       {currentSlide.caption}
                     </p>
                   </div>
@@ -171,139 +187,196 @@ export default function NodeSplitPanel({
               )}
             </div>
 
-            {/* Quick Add Button */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-nebula-silver">
-                Daftar Kenangan ({memories.length})
+            {/* List Header & Add Button */}
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-ink-secondary">
+                Memory Journal ({memories.length})
               </span>
               <button
                 type="button"
                 onClick={() => onOpenUploadForNode(nodeIndex, new Date())}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-glow/15 border border-cyan-glow/40 text-cyan-glow text-xs font-medium hover:bg-cyan-glow hover:text-space-navy transition-all"
+                className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-glow/15 border border-cyan-glow/40 text-cyan-glow text-xs font-semibold hover:bg-cyan-glow hover:text-space-navy transition-colors"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Tambah Foto</span>
+                <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Add Photo</span>
               </button>
             </div>
 
-            {/* Lower: Scrollable Timeline Cards */}
-            <div className="space-y-4">
-              {memories.map((m, idx) => (
-                <div
-                  key={m.id}
-                  className={`p-4 rounded-[20px] border transition-all ${
-                    idx === activeSlideIndex
-                      ? "bg-space-navy/70 border-cyan-glow shadow-[0_0_15px_rgba(124,222,228,0.2)]"
-                      : "bg-black/30 border-white/10 hover:border-cyan-glow/30"
-                  }`}
-                  onClick={() => setActiveSlideIndex(idx)}
-                >
-                  <div className="flex gap-4">
-                    {/* Thumbnail */}
-                    <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-white/10 bg-black">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={m.imageUrl}
-                        alt={m.caption}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+            {/* Scrollable Timeline Cards */}
+            <div className="space-y-3.5">
+              {memories.map((m, idx) => {
+                const isActive = idx === safeIndex;
+                return (
+                  <div
+                    key={m.id}
+                    className={`p-4 rounded-xl border transition-colors ${
+                      isActive
+                        ? "bg-black/65 border-cyan-glow"
+                        : "bg-black/35 border-white/10 hover:border-cyan-glow/35"
+                    }`}
+                  >
+                    <div className="flex gap-4">
+                      {/* Thumbnail Button */}
+                      <button
+                        type="button"
+                        onClick={() => setActiveSlideIndex(idx)}
+                        aria-label={`View photo from ${new Date(m.memoryDate).toLocaleDateString("en-US")}`}
+                        className="w-20 h-20 rounded-lg overflow-hidden shrink-0 border border-white/15 bg-black focus-visible:ring-2 focus-visible:ring-cyan-glow"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={m.imageUrl}
+                          alt={m.caption}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
 
-                    {/* Metadata & Actions */}
-                    <div className="flex-1 min-w-0">
-                      {editingId === m.id ? (
-                        <div className="space-y-2">
-                          <input
-                            type="text"
-                            value={editLocation}
-                            onChange={(e) => setEditLocation(e.target.value)}
-                            placeholder="Lokasi (opsional)"
-                            className="w-full px-3 py-1 text-xs rounded-lg bg-white/10 border border-cyan-glow/30 text-white placeholder-white/30 focus:outline-none"
-                          />
-                          <textarea
-                            value={editCaption}
-                            onChange={(e) => setEditCaption(e.target.value)}
-                            rows={2}
-                            placeholder="Cerita foto..."
-                            className="w-full px-3 py-1 text-xs rounded-lg bg-white/10 border border-cyan-glow/30 text-white placeholder-white/30 focus:outline-none resize-none"
-                          />
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              disabled={isSubmitting}
-                              onClick={() => saveEdit(m.id)}
-                              className="px-3 py-1 rounded-md bg-cyan-glow text-space-navy text-[11px] font-bold flex items-center gap-1 hover:bg-white"
-                            >
-                              <Check className="w-3 h-3" />
-                              <span>Simpan</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditingId(null)}
-                              className="px-2.5 py-1 rounded-md bg-white/10 text-white text-[11px] hover:bg-white/20"
-                            >
-                              Batal
-                            </button>
+                      {/* Metadata & Actions */}
+                      <div className="flex-1 min-w-0">
+                        {editingId === m.id ? (
+                          <div className="space-y-2.5">
+                            <div>
+                              <label
+                                htmlFor={`edit-loc-${m.id}`}
+                                className="block text-[11px] text-ink-secondary mb-1"
+                              >
+                                Location (optional)
+                              </label>
+                              <input
+                                id={`edit-loc-${m.id}`}
+                                type="text"
+                                value={editLocation}
+                                onChange={(e) => setEditLocation(e.target.value)}
+                                placeholder="e.g. Kyoto, Mount Bromo"
+                                className="w-full px-3 py-1.5 text-xs rounded-lg bg-black/60 border border-cyan-glow/30 text-ink-primary placeholder-ink-muted focus:outline-none focus:border-cyan-glow"
+                              />
+                            </div>
+                            <div>
+                              <label
+                                htmlFor={`edit-cap-${m.id}`}
+                                className="block text-[11px] text-ink-secondary mb-1"
+                              >
+                                Memory Story
+                              </label>
+                              <textarea
+                                id={`edit-cap-${m.id}`}
+                                value={editCaption}
+                                onChange={(e) => setEditCaption(e.target.value)}
+                                rows={2}
+                                placeholder="Write the story behind this moment..."
+                                className="w-full px-3 py-1.5 text-xs rounded-lg bg-black/60 border border-cyan-glow/30 text-ink-primary placeholder-ink-muted focus:outline-none focus:border-cyan-glow resize-none"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                disabled={isSubmitting || !editCaption.trim()}
+                                onClick={() => saveEdit(m.id)}
+                                className="min-h-[34px] px-3 py-1 rounded-md bg-cyan-glow text-space-navy text-xs font-bold inline-flex items-center gap-1 hover:bg-white disabled:opacity-50"
+                              >
+                                <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                                <span>{isSubmitting ? "Saving..." : "Save"}</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingId(null)}
+                                className="min-h-[34px] px-3 py-1 rounded-md bg-white/10 text-ink-primary text-xs hover:bg-white/20"
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <div className="flex items-center gap-2 text-[11px] text-nebula-silver">
-                              <span className="inline-flex items-center gap-1">
-                                <Calendar className="w-3 h-3 text-cyan-glow" />
-                                {new Date(m.memoryDate).toLocaleDateString("id-ID", {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                })}
-                              </span>
-                              {m.location && (
-                                <span className="inline-flex items-center gap-1 text-amber-star">
-                                  <MapPin className="w-3 h-3" />
-                                  <span className="truncate max-w-[120px]">{m.location}</span>
+                        ) : (
+                          <>
+                            <div className="flex items-start justify-between gap-2 mb-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setActiveSlideIndex(idx)}
+                                className="flex flex-wrap items-center gap-2 text-left text-[11px] text-ink-secondary font-mono"
+                              >
+                                <span className="inline-flex items-center gap-1">
+                                  <Calendar
+                                    className="w-3 h-3 text-cyan-glow"
+                                    aria-hidden="true"
+                                  />
+                                  {new Date(m.memoryDate).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })}
                                 </span>
-                              )}
-                            </div>
-
-                            {/* Edit & Delete Action Icons */}
-                            <div className="flex items-center gap-1 shrink-0">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  startEdit(m);
-                                }}
-                                title="Edit Cerita / Lokasi"
-                                className="p-1 rounded text-nebula-silver hover:text-cyan-glow transition-colors"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
+                                {m.location && (
+                                  <span className="inline-flex items-center gap-1 text-amber-star">
+                                    <MapPin className="w-3 h-3" aria-hidden="true" />
+                                    <span className="truncate max-w-[140px]">
+                                      {m.location}
+                                    </span>
+                                  </span>
+                                )}
                               </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (confirm("Hapus foto kenangan ini dari langit?")) {
-                                    onDeleteMemory(m.id);
+
+                              {/* Edit & Inline Delete Controls */}
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => startEdit(m)}
+                                  aria-label="Edit story or location"
+                                  title="Edit story or location"
+                                  className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center rounded-md text-ink-secondary hover:text-cyan-glow hover:bg-white/5 transition-colors"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setConfirmDeleteId((prev) =>
+                                      prev === m.id ? null : m.id
+                                    )
                                   }
-                                }}
-                                title="Hapus Foto"
-                                className="p-1 rounded text-nebula-silver hover:text-rose-400 transition-colors"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                                  aria-label="Delete memory"
+                                  title="Delete memory"
+                                  className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center rounded-md text-ink-secondary hover:text-rose-400 hover:bg-white/5 transition-colors"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                                </button>
+                              </div>
                             </div>
-                          </div>
 
-                          <p className="text-xs text-white/90 leading-relaxed font-body">
-                            {m.caption}
-                          </p>
-                        </>
-                      )}
+                            {confirmDeleteId === m.id ? (
+                              <div className="mt-2 p-2.5 rounded-lg bg-rose-950/60 border border-rose-500/40 flex flex-wrap items-center justify-between gap-2 text-xs">
+                                <span className="text-rose-200">
+                                  Remove this memory from the sky?
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    disabled={isSubmitting}
+                                    onClick={() => confirmDelete(m.id)}
+                                    className="px-2.5 py-1 rounded bg-rose-500 text-white font-semibold hover:bg-rose-400 disabled:opacity-50"
+                                  >
+                                    {isSubmitting ? "Removing..." : "Delete"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmDeleteId(null)}
+                                    className="px-2.5 py-1 rounded bg-white/10 text-ink-primary hover:bg-white/20"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-xs sm:text-sm text-ink-primary/90 leading-relaxed">
+                                {m.caption}
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}

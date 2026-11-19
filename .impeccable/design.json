@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-19T21:41:30+07:00",
+  "title": "Design System: Twelve Skies",
+  "extensions": {
+    "colorMeta": {
+      "space-black": {
+        "role": "neutral",
+        "displayName": "Space Black",
+        "canonical": "#000000",
+        "tonalRamp": ["#000000", "#05070e", "#0b101d", "#151c2e", "#222b42", "#3d4963", "#64748b", "#94a3b8"]
+      },
+      "space-abyss": {
+        "role": "neutral",
+        "displayName": "Space Abyss",
+        "canonical": "#04091e",
+        "tonalRamp": ["#02040e", "#04091e", "#081236", "#0e1d52", "#172c73", "#2d4899", "#5c79cc", "#a3b8f0"]
+      },
+      "space-navy": {
+        "role": "secondary",
+        "displayName": "Midnight Navy",
+        "canonical": "#03045e",
+        "tonalRamp": ["#010233", "#03045e", "#080a7a", "#14189c", "#262cbf", "#4850d9", "#7b82eb", "#bec2fa"]
+      },
+      "cyan-glow": {
+        "role": "primary",
+        "displayName": "Electric Cyan",
+        "canonical": "#7cdee4",
+        "tonalRamp": ["#0c2d30", "#14494e", "#1e6b73", "#2b949e", "#46bcc7", "#7cdee4", "#a9edf2", "#dcf9fb"]
+      },
+      "cyan-wake": {
+        "role": "secondary",
+        "displayName": "Bioluminescent Wake",
+        "canonical": "#38bdf8",
+        "tonalRamp": ["#082536", "#0d3b54", "#12577a", "#1b7aa8", "#279ed6", "#38bdf8", "#7cd4fb", "#cbeefe"]
+      },
+      "amber-star": {
+        "role": "tertiary",
+        "displayName": "Stellar Amber",
+        "canonical": "#fec42d",
+        "tonalRamp": ["#332404", "#543c08", "#7a580c", "#a87b12", "#d6a01d", "#fec42d", "#fed873", "#ffefc2"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Titillium Web Display", "purpose": "Opening horizon headline and section headers." },
+      "body": { "displayName": "Manrope Body", "purpose": "Readable UI prose and personal memory journal stories." },
+      "mono": { "displayName": "JetBrains Mono Telemetry", "purpose": "Calendar dates, RA/Dec coordinates, and B = floor(D/N) formulas." }
+    },
+    "shadows": [
+      { "name": "star-halo", "value": "0 0 16px rgba(124, 222, 228, 0.35)", "purpose": "Active constellation marker or star node highlight." }
+    ],
+    "motion": [
+      { "name": "ease-observatory", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Panel slides, modal reveals, and radial star-node preview expansion." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Observatory Action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main action for entering the 3D dome or archiving a memory.",
+      "html": "<button class=\"ds-btn-primary\">Open 3D Sky</button>",
+      "css": ".ds-btn-primary { background: #7cdee4; color: #03045e; font-weight: 700; font-size: 0.875rem; padding: 10px 24px; border-radius: 8px; border: none; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-primary:hover { background: #f8fafc; } .ds-btn-primary:focus-visible { outline: 2px solid #7cdee4; outline-offset: 3px; }"
+    },
+    {
+      "name": "Secondary Hairline Action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Secondary action paired beside primary observatory CTAs.",
+      "html": "<button class=\"ds-btn-secondary\">Sign In to Vault</button>",
+      "css": ".ds-btn-secondary { background: transparent; color: #f8fafc; font-weight: 500; font-size: 0.875rem; padding: 10px 24px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease; } .ds-btn-secondary:hover { border-color: rgba(124,222,228,0.6); background: rgba(255,255,255,0.04); } .ds-btn-secondary:focus-visible { outline: 2px solid #7cdee4; outline-offset: 3px; }"
+    },
+    {
+      "name": "Observatory Field Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Form input used across date simulation, login, and photo upload.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"you@example.com\" />",
+      "css": ".ds-input { background: rgba(0,0,0,0.55); color: #f8fafc; font-size: 0.875rem; padding: 10px 16px; border-radius: 8px; border: 1px solid rgba(124,222,228,0.28); caret-color: #7cdee4; } .ds-input::placeholder { color: #788ca8; } .ds-input:focus { outline: none; border-color: #7cdee4; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Bioluminescent Starfield Observatory",
+    "overview": "Twelve Skies pairs the deep-space Neowise starfield backdrop with pointer-reactive bioluminescent cyan star wakes so the night sky remains an active, breathable ground across every route. UI surfaces step back into disciplined midnight-abyss containers ruled by razor-thin cyan hairlines, allowing 4-point sparkle stars, twelve calibrated zodiac hues, and personal photography to lead without visual competition.",
+    "keyCharacteristics": [
+      "Continuous Neowise cosmic starfield (#000000 to #04091e) augmented by a 60fps pointer-reactive wake canvas (#7cdee4 / #38bdf8).",
+      "Geometric Titillium Web display headings paired with Manrope body prose and JetBrains Mono reserved strictly for astronomical coordinates, dates, and distribution formulas.",
+      "Restraint in frosted glass (backdrop-blur-md capped to focused inspection lenses, modals, and the split-view memory journal).",
+      "Twelve spectral constellation colors reserved for astronomical geometry, glyphs, and node beacons."
+    ],
+    "rules": [
+      { "name": "The Chromatic Sky Rule", "body": "Never apply gradient fills to display text or flood sections with decorative cyan glow. Electric cyan marks interactive intent; constellation spectral hues mark astronomical houses only.", "section": "colors" },
+      { "name": "The No-Eyebrow Rule", "body": "Never stack tracked uppercase mono pills above display headlines; let heading scale and hierarchy speak directly.", "section": "typography" },
+      { "name": "The Starfield Depth Rule", "body": "Never seal panels with opaque muddy greys or large radial glow blobs that block the Neowise cosmic starfield.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use custom vector glyphs (ZodiacGlyph.tsx and CelestialLogo.tsx) for all astronomical iconography.",
+      "Do mark every public sample memory entry clearly as Illustrative Preview or Illustrative Sample Entries.",
+      "Do provide explicit loading, error-with-retry, and empty states plus Escape key handling on all interactive panels and modals.",
+      "Do keep prefers-reduced-motion: reduce respected across wake canvas animations, panel slides, and smooth scrolling."
+    ],
+    "donts": [
+      "Don't render raw Unicode zodiac emojis (♌, ✨) or em dashes (—) anywhere in UI copy.",
+      "Don't use pill (rounded-[30px]) inputs or stack backdrop-blur across every landing section card.",
+      "Don't invent metrics, testimonials, or unlabelled sample claims."
+    ]
+  }
+}

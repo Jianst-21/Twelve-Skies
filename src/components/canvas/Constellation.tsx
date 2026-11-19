@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { Html } from "@react-three/drei";
 import { ConstellationData, MemoryItem } from "@/types";
 import { getNodeDateRange } from "@/lib/dateDistributor";
+import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
 import StarNode from "./StarNode";
 
 interface ConstellationProps {
@@ -26,6 +27,12 @@ export default function Constellation({
 }: ConstellationProps) {
   const [isHovered, setIsHovered] = useState(false);
 
+  const totalConstellationMemories = useMemo(
+    () =>
+      Object.values(memoriesByNode).reduce((sum, list) => sum + list.length, 0),
+    [memoriesByNode]
+  );
+
   // Build line geometry connecting constellation nodes
   const lineGeometry = useMemo(() => {
     const points: THREE.Vector3[] = [];
@@ -37,11 +44,10 @@ export default function Constellation({
         points.push(new THREE.Vector3(...toPos));
       }
     }
-    const geom = new THREE.BufferGeometry().setFromPoints(points);
-    return geom;
+    return new THREE.BufferGeometry().setFromPoints(points);
   }, [constellation]);
 
-  const activeOpacity = isSelected ? 0.95 : isHovered ? 0.8 : 0.35;
+  const activeOpacity = isSelected ? 0.95 : isHovered ? 0.85 : 0.38;
   const activeColor = isSelected || isHovered ? constellation.glowColor : "#64748B";
 
   return (
@@ -59,16 +65,18 @@ export default function Constellation({
       {/* Center Label / Constellation Marker */}
       <group position={constellation.center}>
         <Html center distanceFactor={22} zIndexRange={[5, 0]}>
-          <div
-            className={`transition-all duration-300 cursor-pointer select-none px-3.5 py-1.5 rounded-full border backdrop-blur-md flex items-center gap-2 shadow-lg ${
+          <button
+            type="button"
+            className={`transition-all duration-300 cursor-pointer select-none px-3.5 py-1.5 rounded-lg border backdrop-blur-md flex items-center gap-2.5 ${
               isSelected
-                ? "bg-space-navy/85 border-cyan-glow scale-110"
+                ? "bg-space-abyss/90 border-cyan-glow scale-105"
                 : isHovered
-                ? "bg-space-navy/70 border-white/40 scale-105"
-                : "bg-black/40 border-white/10 opacity-70 hover:opacity-100"
+                ? "bg-space-abyss/80 border-white/40 scale-105"
+                : "bg-black/65 border-white/15 opacity-80 hover:opacity-100"
             }`}
             style={{
-              boxShadow: isSelected || isHovered ? `0 0 15px ${constellation.glowColor}50` : undefined,
+              boxShadow:
+                isSelected || isHovered ? `0 0 16px ${constellation.glowColor}40` : undefined,
             }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -77,18 +85,24 @@ export default function Constellation({
               onSelectConstellation(constellation);
             }}
           >
-            <span className="text-base" style={{ color: constellation.glowColor }}>
-              {constellation.symbol}
+            <span
+              className="flex items-center justify-center shrink-0"
+              style={{ color: constellation.glowColor }}
+            >
+              <ZodiacGlyph id={constellation.id} size={15} />
             </span>
             <div className="text-left">
-              <span className="font-display text-xs font-bold tracking-wider text-white block uppercase leading-none">
+              <span className="font-display text-xs font-bold tracking-wider text-ink-primary block uppercase leading-none">
                 {constellation.name}
               </span>
-              <span className="text-[9px] text-nebula-silver block mt-0.5 leading-none">
+              <span className="font-mono text-[9px] text-ink-secondary block mt-0.5 leading-none">
                 {constellation.periodText}
+                {totalConstellationMemories > 0
+                  ? ` · ${totalConstellationMemories} saved`
+                  : ""}
               </span>
             </div>
-          </div>
+          </button>
         </Html>
       </group>
 

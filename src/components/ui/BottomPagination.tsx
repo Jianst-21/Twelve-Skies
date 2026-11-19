@@ -1,8 +1,8 @@
 "use client";
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CONSTELLATIONS } from "@/data/constellations";
 import { ConstellationData } from "@/types";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
 
 interface BottomPaginationProps {
@@ -27,9 +27,12 @@ export default function BottomPagination({
   };
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 select-none">
+    <nav
+      aria-label="Constellation switcher"
+      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 select-none max-w-[95vw]"
+    >
       {/* 12 Zodiac Astronomical Glyphs Quick Selector */}
-      <div className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-space-black/80 border border-cyan-glow/20 backdrop-blur-md">
+      <div className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-black/80 border border-white/15 backdrop-blur-md">
         {CONSTELLATIONS.map((c) => {
           const isActive = c.id === currentConstellation.id;
           return (
@@ -37,33 +40,34 @@ export default function BottomPagination({
               key={c.id}
               type="button"
               onClick={() => onSelectConstellation(c)}
+              aria-label={`Focus ${c.name} (${c.periodText})`}
+              aria-current={isActive ? "true" : undefined}
               title={`${c.name} (${c.periodText})`}
-              className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 ${
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                 isActive
-                  ? "bg-cyan-glow text-space-navy font-bold scale-105"
-                  : "text-nebula-silver/70 hover:text-white hover:bg-white/10"
+                  ? "bg-cyan-glow text-space-navy font-bold"
+                  : "text-ink-secondary hover:text-ink-primary hover:bg-white/10"
               }`}
             >
-              <ZodiacGlyph id={c.id} size={14} />
+              <ZodiacGlyph id={c.id} size={15} />
             </button>
           );
         })}
       </div>
 
-      {/* Main Bottom Pagination Pill */}
-      <div className="flex items-center gap-2 sm:gap-3 px-3 py-1.5 rounded-full bg-space-navy/70 border border-cyan-glow/30 backdrop-blur-xl shadow-lg shadow-black/50">
-        {/* Prev Button */}
+      {/* Main Constellation Pagination Control */}
+      <div className="flex items-center gap-2 sm:gap-3 px-2.5 py-1.5 rounded-xl bg-space-abyss/85 border border-cyan-glow/30 backdrop-blur-md">
         <button
           type="button"
           onClick={handlePrev}
-          title="Rasi Sebelumnya"
-          className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 border border-cyan-glow/20 text-white hover:bg-cyan-glow hover:text-space-navy hover:border-cyan-glow transition-colors"
+          aria-label="Previous constellation"
+          title="Previous constellation"
+          className="min-w-[40px] min-h-[40px] rounded-lg flex items-center justify-center bg-black/45 border border-white/15 text-ink-primary hover:bg-cyan-glow hover:text-space-navy hover:border-cyan-glow transition-colors"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-5 h-5" aria-hidden="true" />
         </button>
 
-        {/* Current Constellation Info */}
-        <div className="px-3 sm:px-5 py-1 text-center min-w-[150px] sm:min-w-[200px]">
+        <div className="px-2 sm:px-5 py-0.5 text-center min-w-[155px] sm:min-w-[210px]">
           <div className="flex items-center justify-center gap-2">
             <span
               className="flex items-center justify-center"
@@ -71,25 +75,25 @@ export default function BottomPagination({
             >
               <ZodiacGlyph id={currentConstellation.id} size={18} />
             </span>
-            <span className="font-display text-sm sm:text-base font-bold tracking-wider text-white uppercase">
+            <span className="font-display text-sm sm:text-base font-bold tracking-wider text-ink-primary uppercase">
               {currentConstellation.name}
             </span>
           </div>
-          <span className="text-[10px] sm:text-xs text-nebula-silver block mt-0.5 font-medium">
+          <span className="font-mono text-[10px] sm:text-xs text-ink-secondary block mt-0.5">
             {currentConstellation.periodText}
           </span>
         </div>
 
-        {/* Next Button */}
         <button
           type="button"
           onClick={handleNext}
-          title="Rasi Berikutnya"
-          className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 border border-cyan-glow/20 text-white hover:bg-cyan-glow hover:text-space-navy hover:border-cyan-glow transition-colors"
+          aria-label="Next constellation"
+          title="Next constellation"
+          className="min-w-[40px] min-h-[40px] rounded-lg flex items-center justify-center bg-black/45 border border-white/15 text-ink-primary hover:bg-cyan-glow hover:text-space-navy hover:border-cyan-glow transition-colors"
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-5 h-5" aria-hidden="true" />
         </button>
       </div>
-    </div>
+    </nav>
   );
 }

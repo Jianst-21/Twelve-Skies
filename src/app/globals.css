@@ -2,31 +2,69 @@
 
 @theme {
   --color-space-black: #000000;
-  --color-space-navy: #03045E;
+  --color-space-abyss: #04091e;
+  --color-space-navy: #03045e;
   --color-space-navy-glass: rgba(3, 4, 94, 0.45);
-  --color-cyan-glow: #7CDEE4;
+  --color-cyan-glow: #7cdee4;
+  --color-cyan-wake: #38bdf8;
   --color-cyan-glow-30: rgba(124, 222, 228, 0.31);
   --color-cyan-glow-60: rgba(124, 222, 228, 0.63);
-  --color-amber-star: #FEC42D;
-  --color-nebula-silver: #A0AEC0;
+  --color-amber-star: #fec42d;
+  --color-nebula-silver: #9fb2cc;
+  --color-ink-primary: #f8fafc;
+  --color-ink-secondary: #9fb2cc;
+  --color-ink-muted: #788ca8;
 
-  --font-display: var(--font-titillium-web), sans-serif;
-  --font-body: var(--font-inter), sans-serif;
+  --font-display: var(--font-titillium-web), system-ui, sans-serif;
+  --font-body: var(--font-manrope), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
 :root {
   --background: #000000;
-  --foreground: #ffffff;
+  --background-abyss: #04091e;
+  --foreground: #f8fafc;
+  --foreground-muted: #9fb2cc;
+  --accent-cyan: #7cdee4;
+  --accent-wake: #38bdf8;
+  --accent-amber: #fec42d;
+  --hairline: rgba(124, 222, 228, 0.16);
+  --hairline-active: rgba(124, 222, 228, 0.55);
 }
 
+html,
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-body);
-  overflow-x: hidden;
+  overflow-x: clip;
+  caret-color: var(--accent-cyan);
+  scroll-behavior: smooth;
 }
 
-/* Custom Scrollbar for cosmic theme */
+/* Native interactive affordances and instant focus ring */
+a[href],
+button:not(:disabled),
+summary,
+select,
+label[for],
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 3px;
+}
+
+/* Cosmic scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -37,15 +75,15 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(124, 222, 228, 0.3);
+  background: rgba(124, 222, 228, 0.28);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #7CDEE4;
+  background: #7cdee4;
 }
 
-/* Cosmic Animations */
+/* Deliberate keyframe motions */
 @keyframes spinSlow {
   from {
     transform: rotate(0deg);
@@ -55,23 +93,36 @@ body {
   }
 }
 
-@keyframes floatSlow {
-  0%, 100% {
-    transform: translateY(0px);
+@keyframes panelSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
   }
-  50% {
-    transform: translateY(-10px);
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
-@keyframes pulseGlow {
-  0%, 100% {
-    opacity: 0.6;
-    transform: scale(1);
+@keyframes modalReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
   }
-  50% {
-    opacity: 0.95;
-    transform: scale(1.04);
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes radialPreviewIn {
+  from {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -79,10 +130,32 @@ body {
   animation: spinSlow 35s linear infinite;
 }
 
-.animate-float-slow {
-  animation: floatSlow 6s ease-in-out infinite;
+.animate-panel-slide-in {
+  animation: panelSlideInRight 260ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.animate-pulse-glow {
-  animation: pulseGlow 4s ease-in-out infinite;
+.animate-modal-reveal {
+  animation: modalReveal 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-radial-preview {
+  animation: radialPreviewIn 240ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform-origin: bottom center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-spin-slow,
+  .animate-panel-slide-in,
+  .animate-modal-reveal,
+  .animate-radial-preview {
+    animation: none !important;
+  }
+
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }

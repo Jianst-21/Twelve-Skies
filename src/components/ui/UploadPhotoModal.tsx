@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useRef, useEffect, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  AlertCircle,
+  Calendar,
+  FileImage,
+  MapPin,
+  Upload,
+  X,
+} from "lucide-react";
 import { getConstellationAndNode } from "@/lib/dateDistributor";
 import { createClient } from "@/lib/supabase/client";
 import CelestialLogo from "@/components/ui/CelestialLogo";
 import ZodiacGlyph from "@/components/ui/ZodiacGlyph";
-import {
-  X,
-  Upload,
-  Calendar,
-  MapPin,
-  AlertCircle,
-  FileImage,
-} from "lucide-react";
 
 interface UploadPhotoModalProps {
   isOpen: boolean;
@@ -29,7 +29,7 @@ export default function UploadPhotoModal({
 }: UploadPhotoModalProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [dateStr, setDateStr] = useState<string>(
+  const [dateStr, setDateStr] = useState<string>(() =>
     initialDate ? initialDate.toISOString().slice(0, 10) : "2025-01-01"
   );
   const [location, setLocation] = useState("");
@@ -38,25 +38,28 @@ export default function UploadPhotoModal({
   const [isPending, startTransition] = useTransition();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const supabase = createClient();
 
   useEffect(() => {
-    if (initialDate) {
-      setDateStr(initialDate.toISOString().slice(0, 10));
-    } else {
-      setDateStr(new Date().toISOString().slice(0, 10));
-    }
-  }, [initialDate]);
+    if (!isOpen) return;
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isPending) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isPending, onClose]);
 
   if (!isOpen) return null;
 
-  // Real-time live preview of constellation and node mapping
-  const targetDate = new Date(dateStr);
-  const mapping = !isNaN(targetDate.getTime())
-    ? getConstellationAndNode(targetDate)
-    : null;
+  const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+  const mapping = isValidDate ? getConstellationAndNode(dateStr) : null;
 
-  // Client-side image compression
+  // Client-side image compression (max 1920px, WebP quality 0.82)
   const compressImage = async (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -114,23 +117,19 @@ export default function UploadPhotoModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile) {
-      setErrorMessage("Silakan pilih file foto terlebih dahulu.");
+      setErrorMessage("Please choose a photograph before archiving.");
       return;
     }
     if (!caption.trim()) {
-      setErrorMessage("Cerita kenangan wajib diisi.");
+      setErrorMessage("Please enter a short story or caption for this memory.");
       return;
     }
 
     startTransition(async () => {
       setErrorMessage(null);
       try {
-        // 1. Client-side compression
         const compressedBlob = await compressImage(selectedFile);
-
-        // 2. Upload to Supabase Storage bucket 'sky-memories'
-        const fileExt = "webp";
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.webp`;
         const filePath = `user-memories/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
@@ -141,17 +140,15 @@ export default function UploadPhotoModal({
           });
 
         if (uploadError) {
-          throw new Error(`Gagal mengunggah foto ke storage: ${uploadError.message}`);
+          throw new Error(`Storage upload failed: ${uploadError.message}`);
         }
 
-        // Get public URL
         const { data: urlData } = supabase.storage
           .from("sky-memories")
           .getPublicUrl(filePath);
 
         const publicImageUrl = urlData.publicUrl;
 
-        // 3. Post memory record to server API via Prisma ORM
         const res = await fetch("/api/memories", {
           method: "POST",
           headers: {
@@ -167,10 +164,9 @@ export default function UploadPhotoModal({
 
         if (!res.ok) {
           const errData = await res.json();
-          throw new Error(errData.error || "Gagal menyimpan data memori ke server.");
+          throw new Error(errData.error || "Failed to save memory to the server.");
         }
 
-        // Success: Reset and close
         setSelectedFile(null);
         setPreviewUrl(null);
         setCaption("");
@@ -181,55 +177,77 @@ export default function UploadPhotoModal({
         if (err instanceof Error) {
           setErrorMessage(err.message);
         } else {
-          setErrorMessage("Terjadi kesalahan tidak terduga saat menyimpan memori.");
+          setErrorMessage("An unexpected error occurred while saving your memory.");
         }
       }
     });
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg p-6 sm:p-8 rounded-[32px] bg-space-navy/90 border border-cyan-glow/30 backdrop-blur-2xl shadow-[0_0_50px_rgba(3,4,94,0.8)] overflow-hidden">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="upload-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isPending) {
+          onClose();
+        }
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-md"
+    >
+      <div className="relative w-full max-w-lg p-6 sm:p-7 rounded-xl bg-space-abyss/95 border border-cyan-glow/30 animate-modal-reveal max-h-[92vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-cyan-glow/20 mb-5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-cyan-glow/15 border border-cyan-glow/40 flex items-center justify-center text-cyan-glow">
+        <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-cyan-glow/15 border border-cyan-glow/40 flex items-center justify-center text-cyan-glow">
               <CelestialLogo size={18} />
             </div>
             <div>
-              <h2 className="font-display text-lg font-bold uppercase tracking-wider text-white">
-                Tambah Memori Langit
+              <h2
+                id="upload-modal-title"
+                className="font-display text-lg font-bold tracking-wide text-ink-primary"
+              >
+                Archive a Sky Memory
               </h2>
-              <p className="text-[11px] text-nebula-silver">
-                Foto akan otomatis diposisikan pada rasi zodiak yang sesuai
+              <p className="text-xs text-ink-secondary">
+                Automatically mapped to its zodiac star node by capture date
               </p>
             </div>
           </div>
 
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/5 border border-cyan-glow/20 flex items-center justify-center text-nebula-silver hover:text-white hover:border-cyan-glow transition-all"
+            aria-label="Close upload modal"
+            className="min-w-[38px] min-h-[38px] rounded-lg bg-black/45 border border-white/15 flex items-center justify-center text-ink-secondary hover:text-ink-primary hover:border-cyan-glow transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2 text-xs text-rose-300">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+          <div
+            role="alert"
+            className="mb-4 p-3 rounded-lg bg-rose-950/60 border border-rose-500/40 flex items-start gap-2 text-xs text-rose-200"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" aria-hidden="true" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Photo Dropzone / Upload area */}
+          {/* Photo Dropzone */}
           <div>
-            <label className="block text-xs font-semibold text-nebula-silver mb-1.5 pl-2">
-              Pilih Foto Kenangan
+            <label
+              htmlFor="memory-file-input"
+              className="block text-xs font-medium text-ink-secondary mb-1.5"
+            >
+              Photograph (JPG, PNG, or WebP)
             </label>
             <input
+              id="memory-file-input"
               type="file"
               ref={fileInputRef}
               accept="image/jpeg,image/png,image/webp"
@@ -238,133 +256,150 @@ export default function UploadPhotoModal({
             />
 
             {previewUrl ? (
-              <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-cyan-glow/40 bg-black/40 group">
+              <div className="relative w-full h-44 rounded-lg overflow-hidden border border-cyan-glow/40 bg-black/50 group">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={previewUrl}
-                  alt="Preview"
+                  alt="Selected memory preview"
                   className="w-full h-full object-cover"
                 />
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs font-medium text-white transition-opacity gap-2"
+                  className="absolute inset-0 bg-black/65 opacity-0 group-hover:opacity-100 focus:opacity-100 flex items-center justify-center text-xs font-medium text-white transition-opacity gap-2"
                 >
-                  <FileImage className="w-4 h-4" />
-                  <span>Ganti Foto</span>
+                  <FileImage className="w-4 h-4" aria-hidden="true" />
+                  <span>Replace Photograph</span>
                 </button>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full h-36 rounded-2xl border-2 border-dashed border-cyan-glow/30 bg-white/5 hover:bg-white/10 hover:border-cyan-glow transition-all flex flex-col items-center justify-center text-nebula-silver gap-2"
+                className="w-full h-36 rounded-lg border border-dashed border-cyan-glow/35 bg-black/40 hover:bg-black/60 hover:border-cyan-glow transition-colors flex flex-col items-center justify-center text-ink-secondary gap-1.5"
               >
-                <Upload className="w-6 h-6 text-cyan-glow" />
-                <span className="text-xs font-medium text-white">
-                  Klik untuk memilih foto (JPG, PNG, WebP)
+                <Upload className="w-6 h-6 text-cyan-glow" aria-hidden="true" />
+                <span className="text-xs font-medium text-ink-primary">
+                  Choose a photograph from your device
                 </span>
-                <span className="text-[10px] text-nebula-silver">
-                  Dikompresi otomatis secara aman
+                <span className="text-[11px] text-ink-muted">
+                  Compressed client-side to WebP (max 1920px) before upload
                 </span>
               </button>
             )}
           </div>
 
-          {/* Date Picker + Real-time Constellation Live Preview */}
+          {/* Capture Date & Live Mapping Preview */}
           <div>
-            <label className="block text-xs font-semibold text-nebula-silver mb-1.5 pl-2">
-              Tanggal Pengambilan Foto
+            <label
+              htmlFor="memory-date-input"
+              className="block text-xs font-medium text-ink-secondary mb-1.5"
+            >
+              Capture Date
             </label>
             <div className="relative">
-              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-glow" />
+              <Calendar
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-glow pointer-events-none"
+                aria-hidden="true"
+              />
               <input
+                id="memory-date-input"
                 type="date"
                 required
                 value={dateStr}
                 onChange={(e) => setDateStr(e.target.value)}
-                className="w-full pl-11 pr-4 py-2.5 rounded-[30px] bg-white/5 border border-cyan-glow/30 text-white text-xs sm:text-sm focus:outline-none focus:border-cyan-glow"
+                className="w-full min-h-[44px] pl-10 pr-4 py-2 rounded-lg bg-black/55 border border-cyan-glow/30 text-ink-primary font-mono text-xs sm:text-sm focus:outline-none focus:border-cyan-glow"
               />
             </div>
 
-            {/* Live destination preview badge */}
             {mapping && (
               <div
-                className="mt-2 p-2.5 rounded-xl border flex items-center justify-between text-xs transition-colors"
+                className="mt-2.5 p-3 rounded-lg border flex items-center justify-between gap-2 text-xs"
                 style={{
                   borderColor: `${mapping.constellation.glowColor}50`,
                   backgroundColor: `${mapping.constellation.glowColor}10`,
                 }}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <span
                     className="flex items-center justify-center"
                     style={{ color: mapping.constellation.glowColor }}
                   >
-                    <ZodiacGlyph id={mapping.constellation.id} size={16} />
+                    <ZodiacGlyph id={mapping.constellation.id} size={18} />
                   </span>
                   <div>
-                    <span className="font-display font-bold uppercase text-white">
-                      Rasi {mapping.constellation.name}
+                    <span className="font-display font-bold uppercase text-ink-primary">
+                      {mapping.constellation.name}
                     </span>
-                    <span className="text-[10px] text-nebula-silver block">
-                      Titik Bintang #{mapping.nodeIndex + 1} ({mapping.formattedRange})
+                    <span className="font-mono text-[11px] text-ink-secondary block">
+                      Star Node #{mapping.nodeIndex + 1} ({mapping.formattedRange})
                     </span>
                   </div>
                 </div>
                 <span
-                  className="text-[10px] font-mono px-2 py-0.5 rounded-full border"
+                  className="text-[10px] font-mono px-2 py-0.5 rounded border"
                   style={{
-                    borderColor: `${mapping.constellation.glowColor}40`,
+                    borderColor: `${mapping.constellation.glowColor}45`,
                     color: mapping.constellation.glowColor,
                   }}
                 >
-                  Tujuan Otomatis
+                  Auto-Assigned
                 </span>
               </div>
             )}
           </div>
 
-          {/* Location (Optional) */}
+          {/* Location */}
           <div>
-            <label className="block text-xs font-semibold text-nebula-silver mb-1.5 pl-2">
-              Lokasi Kenangan (Opsional)
+            <label
+              htmlFor="memory-location-input"
+              className="block text-xs font-medium text-ink-secondary mb-1.5"
+            >
+              Location (Optional)
             </label>
             <div className="relative">
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-star" />
+              <MapPin
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-star pointer-events-none"
+                aria-hidden="true"
+              />
               <input
+                id="memory-location-input"
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="Contoh: Danau Toba, Kyoto, Pantai Parangtritis"
+                placeholder="e.g. Kyoto, Mount Bromo, Lake Toba"
                 maxLength={150}
-                className="w-full pl-11 pr-4 py-2.5 rounded-[30px] bg-white/5 border border-cyan-glow/30 text-white placeholder-white/25 text-xs sm:text-sm focus:outline-none focus:border-cyan-glow"
+                className="w-full min-h-[44px] pl-10 pr-4 py-2 rounded-lg bg-black/55 border border-cyan-glow/30 text-ink-primary placeholder-ink-muted text-xs sm:text-sm focus:outline-none focus:border-cyan-glow"
               />
             </div>
           </div>
 
-          {/* Caption / Story */}
+          {/* Story / Caption */}
           <div>
-            <label className="block text-xs font-semibold text-nebula-silver mb-1.5 pl-2">
-              Cerita / Catatan Momen
+            <label
+              htmlFor="memory-caption-input"
+              className="block text-xs font-medium text-ink-secondary mb-1.5"
+            >
+              Memory Story
             </label>
             <textarea
+              id="memory-caption-input"
               required
               rows={3}
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
-              placeholder="Ceritakan momen di balik foto ini..."
-              className="w-full px-4 py-2.5 rounded-2xl bg-white/5 border border-cyan-glow/30 text-white placeholder-white/25 text-xs sm:text-sm focus:outline-none focus:border-cyan-glow resize-none"
+              placeholder="Write what happened when this photograph was taken..."
+              className="w-full px-3.5 py-2.5 rounded-lg bg-black/55 border border-cyan-glow/30 text-ink-primary placeholder-ink-muted text-xs sm:text-sm focus:outline-none focus:border-cyan-glow resize-none"
             />
           </div>
 
-          {/* Submit CTA */}
+          {/* Submit */}
           <button
             type="submit"
             disabled={isPending}
-            className="w-full py-3.5 rounded-[30px] bg-cyan-glow text-space-navy font-bold text-xs uppercase tracking-wider hover:bg-transparent hover:text-white hover:border hover:border-white transition-all shadow-[0_0_20px_rgba(124,222,228,0.3)] disabled:opacity-50"
+            className="w-full min-h-[44px] py-2.5 rounded-lg bg-cyan-glow text-space-navy font-bold text-sm hover:bg-white transition-colors disabled:opacity-50"
           >
-            {isPending ? "Mengompresi & Menyimpan..." : "Semayamkan ke Rasi Bintang"}
+            {isPending ? "Compressing and Archiving..." : "Place in Constellation"}
           </button>
         </form>
       </div>

@@ -12,13 +12,40 @@ export interface NodeDistributionInfo {
   formattedRange: string;
 }
 
-const MONTH_NAMES_ID = [
-  "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
-  "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+export interface NodeBucketSummary {
+  nodeIndex: number;
+  days: number;
+  startDate: Date;
+  endDate: Date;
+  formattedRange: string;
+}
+
+const MONTH_NAMES_EN = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
 function toUtcMidnight(date: Date): number {
   return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+/**
+ * Parses YYYY-MM-DD strings as local calendar dates to prevent UTC timezone shifts.
+ */
+function parseCalendarDate(dateInput: Date | string): Date {
+  if (typeof dateInput !== "string") return dateInput;
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateInput.trim());
+  if (isoMatch) {
+    const [, y, m, d] = isoMatch;
+    return new Date(Number(y), Number(m) - 1, Number(d));
+  }
+  return new Date(dateInput);
+}
+
+function formatDayRange(startDate: Date, endDate: Date): string {
+  return `${MONTH_NAMES_EN[startDate.getMonth()]} ${startDate.getDate()} - ${
+    MONTH_NAMES_EN[endDate.getMonth()]
+  } ${endDate.getDate()}`;
 }
 
 /**
@@ -32,7 +59,7 @@ export function getConstellationCycle(date: Date): {
   dayOffset: number;
 } {
   const year = date.getFullYear();
-  const month = date.getMonth() + 1; // 1-12
+  const month = date.getMonth() + 1;
   const day = date.getDate();
 
   for (const c of CONSTELLATIONS) {
@@ -97,7 +124,7 @@ export function getConstellationCycle(date: Date): {
  * The first R nodes get (B + 1) days, the remaining (N - R) nodes get B days.
  */
 export function getConstellationAndNode(dateInput: Date | string): NodeDistributionInfo {
-  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  const date = parseCalendarDate(dateInput);
   const { constellation, startDate, totalDays, dayOffset } = getConstellationCycle(date);
 
   const N = constellation.nodes.length;
@@ -127,10 +154,6 @@ export function getConstellationAndNode(dateInput: Date | string): NodeDistribut
   const nodeStartDate = new Date(startDate.getTime() + nodeStartOffset * msPerDay);
   const nodeEndDate = new Date(startDate.getTime() + nodeEndOffset * msPerDay);
 
-  const formattedRange = `${nodeStartDate.getDate()} ${
-    MONTH_NAMES_ID[nodeStartDate.getMonth()]
-  } – ${nodeEndDate.getDate()} ${MONTH_NAMES_ID[nodeEndDate.getMonth()]}`;
-
   return {
     constellation,
     nodeIndex: targetNodeIndex,
@@ -139,7 +162,7 @@ export function getConstellationAndNode(dateInput: Date | string): NodeDistribut
     totalDays: D,
     nodeStartDate,
     nodeEndDate,
-    formattedRange,
+    formattedRange: formatDayRange(nodeStartDate, nodeEndDate),
   };
 }
 
@@ -151,6 +174,22 @@ export function getNodeDateRange(
   nodeIndex: number,
   refYear = 2025
 ): { startDate: Date; endDate: Date; formattedRange: string } {
+  const buckets = getConstellationBuckets(constellationId, refYear);
+  const match = buckets[nodeIndex] || buckets[0];
+  return {
+    startDate: match.startDate,
+    endDate: match.endDate,
+    formattedRange: match.formattedRange,
+  };
+}
+
+/**
+ * Returns all proportional day-buckets for a constellation using the single-source-of-truth formula.
+ */
+export function getConstellationBuckets(
+  constellationId: string,
+  refYear = 2025
+): NodeBucketSummary[] {
   const constellation = CONSTELLATION_MAP[constellationId] || CONSTELLATIONS[0];
   let cStart: Date;
   let cEnd: Date;
@@ -169,25 +208,22 @@ export function getNodeDateRange(
   const B = Math.floor(D / N);
   const R = D % N;
 
+  const buckets: NodeBucketSummary[] = [];
   let currentOffset = 0;
-  let startOffset = 0;
-  let endOffset = 0;
 
   for (let i = 0; i < N; i++) {
-    const size = i < R ? B + 1 : B;
-    if (i === nodeIndex) {
-      startOffset = currentOffset;
-      endOffset = currentOffset + size - 1;
-      break;
-    }
-    currentOffset += size;
+    const days = i < R ? B + 1 : B;
+    const startDate = new Date(cStart.getTime() + currentOffset * msPerDay);
+    const endDate = new Date(cStart.getTime() + (currentOffset + days - 1) * msPerDay);
+    buckets.push({
+      nodeIndex: i,
+      days,
+      startDate,
+      endDate,
+      formattedRange: formatDayRange(startDate, endDate),
+    });
+    currentOffset += days;
   }
 
-  const startDate = new Date(cStart.getTime() + startOffset * msPerDay);
-  const endDate = new Date(cStart.getTime() + endOffset * msPerDay);
-  const formattedRange = `${startDate.getDate()} ${
-    MONTH_NAMES_ID[startDate.getMonth()]
-  } – ${endDate.getDate()} ${MONTH_NAMES_ID[endDate.getMonth()]}`;
-
-  return { startDate, endDate, formattedRange };
+  return buckets;
 }

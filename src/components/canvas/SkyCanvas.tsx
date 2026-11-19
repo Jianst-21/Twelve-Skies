@@ -19,7 +19,6 @@ interface CameraControllerProps {
 function CameraController({
   targetPosition,
   targetLookAt,
-  isSplitView,
 }: CameraControllerProps) {
   const currentLookAt = useRef(new THREE.Vector3(0, 0, 0));
 
