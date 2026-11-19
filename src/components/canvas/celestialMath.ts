@@ -12,9 +12,222 @@ export interface SpectralStarfieldBuffers {
   phases: Float32Array;
 }
 
+export interface CatalogStarInput {
+  ra: number;
+  dec: number;
+  mag: number;
+  bv: number;
+}
+
+export interface ErgonomicSpacingOptions {
+  minIntraDistance?: number;
+  minInterDistance?: number;
+  sphereRadius?: number;
+  maxIterations?: number;
+}
+
+export interface ErgonomicConstellationInput {
+  id: string;
+  center: Vec3;
+  nodes: Vec3[];
+}
+
 function normalizeVec3(v: Vec3): Vec3 {
   const len = Math.hypot(v[0], v[1], v[2]) || 1;
   return [v[0] / len, v[1] / len, v[2] / len];
+}
+
+function scaleVec3(v: Vec3, s: number): Vec3 {
+  return [v[0] * s, v[1] * s, v[2] * s];
+}
+
+function projectToSphere(v: Vec3, radius: number): Vec3 {
+  return scaleVec3(normalizeVec3(v), radius);
+}
+
+/**
+ * Converts J2000 equatorial coordinates (RA in decimal hours, Dec in degrees)
+ * into Three.js inside-out celestial sphere coordinates matching CONSTELLATIONS.
+ */
+export function celestialToCartesian(
+  raHours: number,
+  decDeg: number,
+  radius: number
+): Vec3 {
+  const raRad = (raHours * 15 * Math.PI) / 180;
+  const decRad = (decDeg * Math.PI) / 180;
+  const cosDec = Math.cos(decRad);
+  return [
+    radius * cosDec * Math.cos(raRad),
+    radius * Math.sin(decRad),
+    -radius * cosDec * Math.sin(raRad),
+  ];
+}
+
+/**
+ * Maps astronomical B-V color index (-0.3 blue-white to +2.0 orange-red)
+ * to a realistic deep-space spectral RGB triplet.
+ */
+export function bvToSpectralColor(bv: number): Vec3 {
+  const clamped = Math.max(-0.3, Math.min(2.0, bv));
+  if (clamped < 0.0) {
+    // O/B blue-white
+    const t = (clamped + 0.3) / 0.3;
+    return [0.68 + 0.24 * t, 0.82 + 0.14 * t, 1.0];
+  }
+  if (clamped < 0.4) {
+    // A/F white to crisp cream
+    const t = clamped / 0.4;
+    return [0.92 + 0.08 * t, 0.96 + 0.02 * t, 1.0 - 0.06 * t];
+  }
+  if (clamped < 1.0) {
+    // G/early-K warm ivory to soft gold
+    const t = (clamped - 0.4) / 0.6;
+    return [1.0, 0.98 - 0.11 * t, 0.94 - 0.28 * t];
+  }
+  // K/M amber to orange-red (Aldebaran, Betelgeuse, Antares)
+  const t = (clamped - 1.0) / 1.0;
+  return [1.0, 0.87 - 0.21 * t, 0.66 - 0.24 * t];
+}
+
+/**
+ * Relaxes tightly clustered real astronomical star pairs on the celestial sphere
+ * so hover hitboxes and memory preview popups never collide, while preserving
+ * each constellation's sky sector, node order, and recognizable silhouette.
+ */
+export function computeErgonomicConstellations<T extends ErgonomicConstellationInput>(
+  constellations: T[],
+  options: ErgonomicSpacingOptions = {}
+): T[] {
+  const minIntra = options.minIntraDistance ?? 4.8;
+  const minInter = options.minInterDistance ?? 7.5;
+  const sphereRadius = options.sphereRadius ?? 45;
+  const maxIterations = options.maxIterations ?? 80;
+
+  const workingNodes: Vec3[][] = constellations.map((c) =>
+    c.nodes.map((n) => projectToSphere(n, sphereRadius))
+  );
+  const anchorNodes: Vec3[][] = workingNodes.map((list) =>
+    list.map((n) => [n[0], n[1], n[2]])
+  );
+
+  for (let iter = 0; iter < maxIterations; iter++) {
+    let maxViolation = 0;
+    const deltas: Vec3[][] = workingNodes.map((list) =>
+      list.map(() => [0, 0, 0])
+    );
+
+    // 1. Intra-constellation minimum spacing
+    for (let cIdx = 0; cIdx < workingNodes.length; cIdx++) {
+      const nodes = workingNodes[cIdx];
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[j][0] - nodes[i][0];
+          const dy = nodes[j][1] - nodes[i][1];
+          const dz = nodes[j][2] - nodes[i][2];
+          const dist = Math.hypot(dx, dy, dz) || 1e-4;
+          if (dist < minIntra) {
+            const overlap = minIntra - dist;
+            if (overlap > maxViolation) maxViolation = overlap;
+            const push = (overlap * 0.55) / dist;
+            deltas[cIdx][i][0] -= dx * push;
+            deltas[cIdx][i][1] -= dy * push;
+            deltas[cIdx][i][2] -= dz * push;
+            deltas[cIdx][j][0] += dx * push;
+            deltas[cIdx][j][1] += dy * push;
+            deltas[cIdx][j][2] += dz * push;
+          }
+        }
+      }
+    }
+
+    // 2. Inter-constellation minimum spacing
+    for (let a = 0; a < workingNodes.length; a++) {
+      for (let b = a + 1; b < workingNodes.length; b++) {
+        const nodesA = workingNodes[a];
+        const nodesB = workingNodes[b];
+        for (let i = 0; i < nodesA.length; i++) {
+          for (let j = 0; j < nodesB.length; j++) {
+            const dx = nodesB[j][0] - nodesA[i][0];
+            const dy = nodesB[j][1] - nodesA[i][1];
+            const dz = nodesB[j][2] - nodesA[i][2];
+            const dist = Math.hypot(dx, dy, dz) || 1e-4;
+            if (dist < minInter) {
+              const overlap = minInter - dist;
+              if (overlap > maxViolation) maxViolation = overlap;
+              const push = (overlap * 0.55) / dist;
+              deltas[a][i][0] -= dx * push;
+              deltas[a][i][1] -= dy * push;
+              deltas[a][i][2] -= dz * push;
+              deltas[b][j][0] += dx * push;
+              deltas[b][j][1] += dy * push;
+              deltas[b][j][2] += dz * push;
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Gentle early anchor pull so shapes stay faithful to J2000 sectors
+    const anchorPull = iter < maxIterations * 0.5 ? 0.035 : 0;
+
+    for (let cIdx = 0; cIdx < workingNodes.length; cIdx++) {
+      const nodes = workingNodes[cIdx];
+      const anchors = anchorNodes[cIdx];
+      for (let i = 0; i < nodes.length; i++) {
+        const nx =
+          nodes[i][0] +
+          deltas[cIdx][i][0] +
+          (anchors[i][0] - nodes[i][0]) * anchorPull;
+        const ny =
+          nodes[i][1] +
+          deltas[cIdx][i][1] +
+          (anchors[i][1] - nodes[i][1]) * anchorPull;
+        const nz =
+          nodes[i][2] +
+          deltas[cIdx][i][2] +
+          (anchors[i][2] - nodes[i][2]) * anchorPull;
+        nodes[i] = projectToSphere([nx, ny, nz], sphereRadius);
+      }
+    }
+
+    if (maxViolation < 0.01 && anchorPull === 0) {
+      break;
+    }
+  }
+
+  return constellations.map((c, cIdx) => {
+    const nodes = workingNodes[cIdx].map(
+      (n): Vec3 => [
+        Number(n[0].toFixed(2)),
+        Number(n[1].toFixed(2)),
+        Number(n[2].toFixed(2)),
+      ]
+    );
+
+    const sum: Vec3 = [0, 0, 0];
+    for (const n of nodes) {
+      sum[0] += n[0];
+      sum[1] += n[1];
+      sum[2] += n[2];
+    }
+    const avg: Vec3 = [
+      sum[0] / Math.max(nodes.length, 1),
+      sum[1] / Math.max(nodes.length, 1),
+      sum[2] / Math.max(nodes.length, 1),
+    ];
+    const center = projectToSphere(avg, sphereRadius);
+
+    return {
+      ...c,
+      center: [
+        Number(center[0].toFixed(2)),
+        Number(center[1].toFixed(2)),
+        Number(center[2].toFixed(2)),
+      ] as Vec3,
+      nodes,
+    };
+  });
 }
 
 function crossVec3(a: Vec3, b: Vec3): Vec3 {
@@ -197,6 +410,71 @@ export function generateSpectralStarfield(
     const mag = Math.pow(rand(), 3.2);
     sizes[i] = 1.0 + mag * 3.4;
     phases[i] = rand() * Math.PI * 2;
+  }
+
+  return { positions, colors, sizes, phases };
+}
+
+/**
+ * Combines real J2000 bright-star catalog landmarks (exact RA/Dec, magnitude-scaled
+ * size, and B-V spectral color) with a subtle Milky Way deep-field star layer.
+ */
+export function generateRealCatalogStarfield(
+  catalogStars: CatalogStarInput[],
+  fillerCount: number,
+  minRadius: number,
+  maxRadius: number,
+  seed = 12026
+): SpectralStarfieldBuffers {
+  const rand = createMulberry32(seed);
+  const catalogCount = catalogStars.length;
+  const totalCount = catalogCount + fillerCount;
+
+  const positions = new Float32Array(totalCount * 3);
+  const colors = new Float32Array(totalCount * 3);
+  const sizes = new Float32Array(totalCount);
+  const phases = new Float32Array(totalCount);
+
+  // 1. Place real J2000 bright catalog stars at their astronomical coordinates
+  for (let i = 0; i < catalogCount; i++) {
+    const star = catalogStars[i];
+    const r = minRadius + 2 + rand() * 8;
+    const pos = celestialToCartesian(star.ra, star.dec, r);
+    positions[i * 3] = pos[0];
+    positions[i * 3 + 1] = pos[1];
+    positions[i * 3 + 2] = pos[2];
+
+    const spectral = bvToSpectralColor(star.bv);
+    const normMag = Math.max(0.08, Math.min(1.0, (5.0 - star.mag) / 6.5));
+    const brightness = 0.68 + normMag * 0.32;
+    colors[i * 3] = spectral[0] * brightness;
+    colors[i * 3 + 1] = spectral[1] * brightness;
+    colors[i * 3 + 2] = spectral[2] * brightness;
+
+    sizes[i] = 1.65 + Math.pow(normMag, 1.55) * 3.65;
+    phases[i] = rand() * Math.PI * 2;
+  }
+
+  // 2. Append subtle deep-field Milky Way dust stars subordinate to real landmarks
+  const filler = generateSpectralStarfield(
+    fillerCount,
+    minRadius + 6,
+    maxRadius,
+    seed ^ 0x5f3759df
+  );
+
+  for (let i = 0; i < fillerCount; i++) {
+    const outIdx = catalogCount + i;
+    positions[outIdx * 3] = filler.positions[i * 3];
+    positions[outIdx * 3 + 1] = filler.positions[i * 3 + 1];
+    positions[outIdx * 3 + 2] = filler.positions[i * 3 + 2];
+
+    colors[outIdx * 3] = filler.colors[i * 3] * 0.72;
+    colors[outIdx * 3 + 1] = filler.colors[i * 3 + 1] * 0.72;
+    colors[outIdx * 3 + 2] = filler.colors[i * 3 + 2] * 0.72;
+
+    sizes[outIdx] = Math.min(2.2, filler.sizes[i] * 0.68);
+    phases[outIdx] = filler.phases[i];
   }
 
   return { positions, colors, sizes, phases };

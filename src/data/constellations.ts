@@ -1,4 +1,4 @@
-import { ConstellationData } from "@/types";
+import type { ConstellationData } from "@/types";
 
 export const CONSTELLATIONS: ConstellationData[] = [
   {

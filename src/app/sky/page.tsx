@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { AlertCircle, MapPin, Plus, RefreshCw, X } from "lucide-react";
 import { CONSTELLATIONS, CONSTELLATION_MAP } from "@/data/constellations";
 import { ConstellationData, MemoryItem } from "@/types";
-import { getNodeDateRange } from "@/lib/dateDistributor";
+import { getConstellationAndNode, getNodeDateRange } from "@/lib/dateDistributor";
 import Navbar from "@/components/ui/Navbar";
 import BottomPagination from "@/components/ui/BottomPagination";
 import NodeSplitPanel from "@/components/ui/NodeSplitPanel";
@@ -33,6 +33,7 @@ export default function SkyPage() {
   const [selectedConstellation, setSelectedConstellation] = useState<ConstellationData>(
     CONSTELLATIONS[0]
   );
+  const [hasAlignedToday, setHasAlignedToday] = useState(false);
   const [selectedNodeIndex, setSelectedNodeIndex] = useState<number | null>(null);
   const [memories, setMemories] = useState<MemoryItem[]>([]);
   const [isLoadingMemories, setIsLoadingMemories] = useState<boolean>(true);
@@ -42,6 +43,20 @@ export default function SkyPage() {
   const [uploadInitialDate, setUploadInitialDate] = useState<Date | undefined>(undefined);
   const [resetCameraTrigger, setResetCameraTrigger] = useState(0);
   const [showVerifiedToast, setShowVerifiedToast] = useState(false);
+
+  // Align initial sky dome POV to today's active zodiac constellation on client mount
+  useEffect(() => {
+    let active = true;
+    const todayConstellation = getConstellationAndNode(new Date()).constellation;
+    Promise.resolve().then(() => {
+      if (!active) return;
+      setSelectedConstellation(todayConstellation);
+      setHasAlignedToday(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Check if redirected after successful email confirmation
   useEffect(() => {
@@ -411,15 +426,17 @@ export default function SkyPage() {
 
       {/* 3D Canvas Area (stays full viewport so WebGL never resizes during split-view) */}
       <div className="w-full h-full">
-        <SkyCanvas
-          selectedConstellation={selectedConstellation}
-          selectedNodeIndex={selectedNodeIndex}
-          memories={memories}
-          isSplitView={isSplitView}
-          onSelectConstellation={handleSelectConstellation}
-          onSelectNode={handleSelectNode}
-          resetTrigger={resetCameraTrigger}
-        />
+        {hasAlignedToday && (
+          <SkyCanvas
+            selectedConstellation={selectedConstellation}
+            selectedNodeIndex={selectedNodeIndex}
+            memories={memories}
+            isSplitView={isSplitView}
+            onSelectConstellation={handleSelectConstellation}
+            onSelectNode={handleSelectNode}
+            resetTrigger={resetCameraTrigger}
+          />
+        )}
       </div>
 
       {/* Bottom Constellation Switcher */}

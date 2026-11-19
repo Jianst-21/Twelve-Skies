@@ -126,6 +126,8 @@ export default function StarNode({
   onHoverChange,
 }: StarNodeProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isPopupMounted, setIsPopupMounted] = useState(false);
+  const exitTimerRef = useRef<number | null>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const highlightRef = useRef(0);
   const selectedRef = useRef(0);
@@ -150,6 +152,9 @@ export default function StarNode({
 
   useEffect(() => {
     return () => {
+      if (exitTimerRef.current !== null) {
+        window.clearTimeout(exitTimerRef.current);
+      }
       document.body.style.cursor = "auto";
     };
   }, []);
@@ -186,6 +191,11 @@ export default function StarNode({
 
   const handlePointerOver = (e: { stopPropagation: () => void }) => {
     e.stopPropagation();
+    if (exitTimerRef.current !== null) {
+      window.clearTimeout(exitTimerRef.current);
+      exitTimerRef.current = null;
+    }
+    setIsPopupMounted(true);
     setIsHovered(true);
     onHoverChange?.(true);
     document.body.style.cursor = "pointer";
@@ -196,6 +206,23 @@ export default function StarNode({
     setIsHovered(false);
     onHoverChange?.(false);
     document.body.style.cursor = "auto";
+
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (reducedMotion) {
+      setIsPopupMounted(false);
+      return;
+    }
+
+    if (exitTimerRef.current !== null) {
+      window.clearTimeout(exitTimerRef.current);
+    }
+    exitTimerRef.current = window.setTimeout(() => {
+      setIsPopupMounted(false);
+      exitTimerRef.current = null;
+    }, 195);
   };
 
   return (
@@ -214,7 +241,7 @@ export default function StarNode({
         />
       </mesh>
 
-      {/* Generous invisible 3D raycast sphere sized to avoid overlapping neighbor stars */}
+      {/* Generous invisible 3D raycast sphere sized for clean, non-overlapping hover */}
       <mesh
         aria-label={`${constellationId} star node ${nodeIndex + 1}`}
         onPointerOver={handlePointerOver}
@@ -228,11 +255,15 @@ export default function StarNode({
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {/* Mount crisp screen-space inspection lens HTML for the hovered star node */}
-      {isHovered && (
+      {/* Two-way star-origin hover popup (blooms from star core, retracts back into star core) */}
+      {isPopupMounted && (
         <Html center zIndexRange={[40, 20]} style={{ pointerEvents: "none" }}>
           {latestMemory ? (
-            <div className="-translate-y-20 flex flex-col items-center pointer-events-none select-none animate-radial-preview">
+            <div
+              className={`flex flex-col items-center pointer-events-none select-none ${
+                isHovered ? "star-popup-enter" : "star-popup-exit"
+              }`}
+            >
               <HoverMemoryThumb
                 key={latestMemory.imageUrl}
                 src={latestMemory.imageUrl}
@@ -249,12 +280,33 @@ export default function StarNode({
                   </span>
                 </div>
               </div>
+
+              <span
+                aria-hidden="true"
+                className="w-px h-3.5 mt-0.5 opacity-70"
+                style={{
+                  background: `linear-gradient(to bottom, ${glowColor}, transparent)`,
+                }}
+              />
             </div>
           ) : (
-            <div className="-translate-y-10 px-2.5 py-1 rounded-md bg-space-abyss/95 border border-white/20 text-xs font-mono text-ink-primary whitespace-nowrap pointer-events-none select-none">
-              <span>Star {String(nodeIndex + 1).padStart(2, "0")}</span>
-              <span className="text-ink-secondary ml-1.5">{dateRangeText}</span>
-              <span className="text-ink-muted ml-1.5">Click to add</span>
+            <div
+              className={`flex flex-col items-center pointer-events-none select-none ${
+                isHovered ? "star-badge-enter" : "star-badge-exit"
+              }`}
+            >
+              <div className="px-2.5 py-1 rounded-md bg-space-abyss/95 border border-white/20 text-xs font-mono text-ink-primary whitespace-nowrap">
+                <span>Star {String(nodeIndex + 1).padStart(2, "0")}</span>
+                <span className="text-ink-secondary ml-1.5">{dateRangeText}</span>
+                <span className="text-ink-muted ml-1.5">Click to add</span>
+              </div>
+              <span
+                aria-hidden="true"
+                className="w-px h-2.5 mt-0.5 opacity-60"
+                style={{
+                  background: `linear-gradient(to bottom, ${glowColor}, transparent)`,
+                }}
+              />
             </div>
           )}
         </Html>

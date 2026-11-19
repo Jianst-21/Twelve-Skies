@@ -9,7 +9,22 @@ import { CONSTELLATIONS } from "@/data/constellations";
 import { ConstellationData, MemoryItem } from "@/types";
 import SpaceDome from "./SpaceDome";
 import Constellation from "./Constellation";
-import { computeTargetDirection } from "./celestialMath";
+import {
+  computeErgonomicConstellations,
+  computeTargetDirection,
+} from "./celestialMath";
+
+const ERGONOMIC_CONSTELLATIONS = computeErgonomicConstellations(CONSTELLATIONS, {
+  minIntraDistance: 4.8,
+  minInterDistance: 7.5,
+  sphereRadius: 45,
+});
+
+const ERGONOMIC_CONSTELLATION_MAP: Record<string, ConstellationData> =
+  ERGONOMIC_CONSTELLATIONS.reduce((acc, c) => {
+    acc[c.id] = c;
+    return acc;
+  }, {} as Record<string, ConstellationData>);
 
 const ORBIT_RADIUS = 0.1;
 const MIN_FOV = 28;
@@ -135,8 +150,13 @@ export default function SkyCanvas({
   const prevResetTriggerRef = useRef(resetTrigger);
   const hasMountedRef = useRef(false);
 
+  const activeErgonomicConstellation = selectedConstellation
+    ? ERGONOMIC_CONSTELLATION_MAP[selectedConstellation.id] ?? selectedConstellation
+    : null;
+
   const initialCamPos = useMemo<[number, number, number]>(() => {
-    const startConstellation = selectedConstellation ?? CONSTELLATIONS[0];
+    const startConstellation =
+      activeErgonomicConstellation ?? ERGONOMIC_CONSTELLATIONS[0];
     const dir = computeTargetDirection(startConstellation.center, null, 0);
     return [
       -dir[0] * ORBIT_RADIUS,
@@ -161,11 +181,11 @@ export default function SkyCanvas({
 
   // Compute fly-to direction and FOV when selection, split-view, or reset changes
   useEffect(() => {
-    if (!selectedConstellation) return;
+    if (!activeErgonomicConstellation) return;
 
     if (!hasMountedRef.current) {
       hasMountedRef.current = true;
-      const initDir = computeTargetDirection(selectedConstellation.center, null, 0);
+      const initDir = computeTargetDirection(activeErgonomicConstellation.center, null, 0);
       goalDirRef.current.set(initDir[0], initDir[1], initDir[2]).normalize();
       if (selectedNodeIndex === null) {
         return;
@@ -184,8 +204,9 @@ export default function SkyCanvas({
     isZoomingRef.current = true;
 
     const nodePos =
-      selectedNodeIndex !== null && selectedConstellation.nodes[selectedNodeIndex]
-        ? selectedConstellation.nodes[selectedNodeIndex]
+      selectedNodeIndex !== null &&
+      activeErgonomicConstellation.nodes[selectedNodeIndex]
+        ? activeErgonomicConstellation.nodes[selectedNodeIndex]
         : null;
 
     // On desktop split-view (right 45vw panel open), shift look target right so
@@ -197,13 +218,13 @@ export default function SkyCanvas({
     }
 
     const dir = computeTargetDirection(
-      selectedConstellation.center,
+      activeErgonomicConstellation.center,
       nodePos,
       splitOffsetTan
     );
     goalDirRef.current.set(dir[0], dir[1], dir[2]).normalize();
     isFlyingRef.current = true;
-  }, [selectedConstellation, selectedNodeIndex, isSplitView, resetTrigger]);
+  }, [activeErgonomicConstellation, selectedNodeIndex, isSplitView, resetTrigger]);
 
   // Smooth wheel-to-FOV zoom inside the celestial sphere
   useEffect(() => {
@@ -272,8 +293,8 @@ export default function SkyCanvas({
           targetFovRef={targetFovRef}
         />
 
-        {/* Render all 12 constellations */}
-        {CONSTELLATIONS.map((c) => {
+        {/* Render all 12 constellations with ergonomic celestial spacing */}
+        {ERGONOMIC_CONSTELLATIONS.map((c) => {
           const isSelected = selectedConstellation?.id === c.id;
           const nodeMemories = memoriesByConstellationAndNode[c.id] || {};
 

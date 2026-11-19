@@ -134,14 +134,47 @@ textarea:disabled {
   }
 }
 
-@keyframes radialPreviewIn {
+@keyframes starPopupEnter {
   from {
     opacity: 0;
-    transform: scale(0.35);
+    transform: translateY(0px) scale(0.16);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(-84px) scale(1);
+  }
+}
+
+@keyframes starPopupExit {
+  from {
+    opacity: 1;
+    transform: translateY(-84px) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(0px) scale(0.16);
+  }
+}
+
+@keyframes starBadgeEnter {
+  from {
+    opacity: 0;
+    transform: translateY(0px) scale(0.22);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-42px) scale(1);
+  }
+}
+
+@keyframes starBadgeExit {
+  from {
+    opacity: 1;
+    transform: translateY(-42px) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(0px) scale(0.22);
   }
 }
 
@@ -157,9 +190,34 @@ textarea:disabled {
   animation: modalReveal 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.animate-radial-preview {
-  animation: radialPreviewIn 240ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  transform-origin: bottom center;
+.star-popup-enter {
+  transform: translateY(-84px) scale(1);
+  transform-origin: center bottom;
+  animation: starPopupEnter 240ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.star-popup-exit {
+  opacity: 0;
+  transform: translateY(0px) scale(0.16);
+  transform-origin: center bottom;
+  animation: starPopupExit 190ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.star-badge-enter {
+  transform: translateY(-42px) scale(1);
+  transform-origin: center bottom;
+  animation: starBadgeEnter 210ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.star-badge-exit {
+  opacity: 0;
+  transform: translateY(0px) scale(0.22);
+  transform-origin: center bottom;
+  animation: starBadgeExit 170ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  will-change: transform, opacity;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -170,7 +228,10 @@ textarea:disabled {
   .animate-spin-slow,
   .animate-panel-slide-in,
   .animate-modal-reveal,
-  .animate-radial-preview {
+  .star-popup-enter,
+  .star-popup-exit,
+  .star-badge-enter,
+  .star-badge-exit {
     animation: none !important;
   }
 

@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { generateSpectralStarfield } from "./celestialMath";
+import { BRIGHT_STARS } from "@/data/brightStars";
+import { generateRealCatalogStarfield } from "./celestialMath";
+
+const ECLIPTIC_OBLIQUITY_RAD = (23.439 * Math.PI) / 180;
 
 const SKY_VERTEX_SHADER = /* glsl */ `
   varying vec3 vDir;
@@ -152,7 +155,10 @@ export default function SpaceDome() {
     ).matches;
   }, []);
 
-  const starData = useMemo(() => generateSpectralStarfield(5200, 88, 118, 12026), []);
+  const starData = useMemo(
+    () => generateRealCatalogStarfield(BRIGHT_STARS, 4200, 88, 120, 12026),
+    []
+  );
 
   const starGeometry = useMemo(() => {
     const geom = new THREE.BufferGeometry();
@@ -244,8 +250,8 @@ export default function SpaceDome() {
         />
       </points>
 
-      {/* Calm equatorial horizon reference ring (replaces dense meridian cage) */}
-      <group>
+      {/* Calm ecliptic zodiac path ring tilted by Earth's 23.44 deg axial obliquity */}
+      <group rotation={[ECLIPTIC_OBLIQUITY_RAD, 0, 0]}>
         <lineLoop geometry={armillaryGeometries.eclipticRing}>
           <lineBasicMaterial color="#7cdee4" transparent opacity={0.09} depthWrite={false} />
         </lineLoop>
